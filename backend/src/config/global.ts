@@ -3,6 +3,11 @@ import { StringValue } from "ms";
 
 dotenv.config();
 
+if (!process.env.JWT_SECRET) {
+  console.error("FATAL ERROR: JWT_SECRET is not set in environment variables.");
+  process.exit(1);
+}
+
 const globalConfig = {
   app: {
     port: process.env.PORT || 4000
@@ -17,7 +22,7 @@ const globalConfig = {
       `postgresql://${process.env.DB_USER}:${process.env.DB_PASSWORD}@${process.env.DB_HOST}:${process.env.DB_PORT}/${process.env.DB_NAME}`
   },
   jwt: {
-    secret: process.env.JWT_SECRET || "spiderchip-secret-VUHuaXCqROP",
+    secret: process.env.JWT_SECRET,
     expiresIn: (process.env.JWT_EXPIRES_IN as StringValue | number) || "1h"
   }
 };
