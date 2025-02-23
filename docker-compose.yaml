@@ -1,0 +1,45 @@
+version: "3.9"
+
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: spiderchip-backend
+    restart: always
+    ports:
+      - "4000:4000"
+    environment:
+      - NODE_ENV=development
+      - PORT=4000
+      - DB_HOST=spiderchip_db
+      - DB_USER=spiderchip
+      - DB_PASSWORD=password
+      - DB_NAME=spiderchip
+      - DB_PORT=5432
+      - JWT_SECRET=VUHuaXCqROP8UiWHnCZqw6fAms42U1XcvE8Nf/gDq8yAYHas2N5cxwqZb7pww7MYHdse6OghXJgPY/9IxQGGwQ==
+    depends_on:
+      - spiderchip_db
+    volumes:
+      - ./backend:/usr/src/app
+      - /usr/src/app/node_modules
+    command: npm run dev
+
+  spiderchip_db:
+    image: postgres:15
+    container_name: spiderchip-postgres
+    restart: always
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: spiderchip
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: spiderchip
+      POSTGRES_ROOT_USER: root
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./backend/src/schema/001_schema.sql:/docker-entrypoint-initdb.d/001_schema.sql
+      - ./backend/src/schema/002_seedUsers.sql:/docker-entrypoint-initdb.d/002_seedUsers.sql
+
+volumes:
+  pgdata:
