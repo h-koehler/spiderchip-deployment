@@ -1,0 +1,60 @@
+name: Run Tests on PR
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'front-end/spiderchip/**'
+      - 'backend/**'
+
+jobs:
+  frontend-tests:
+    name: Run Frontend Tests
+    if: contains(github.event.pull_request.changed_files, 'front-end/spiderchip/')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: front-end/spiderchip/package-lock.json
+
+      - name: Install dependencies (Frontend)
+        run: |
+          cd front-end/spiderchip
+          npm install
+
+      - name: Run Tests (Frontend)
+        run: |
+          cd front-end/spiderchip
+          npm test
+
+  backend-tests:
+    name: Run Backend Tests
+    if: contains(github.event.pull_request.changed_files, 'backend/')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: backend/package-lock.json
+
+      - name: Install dependencies (Backend)
+        run: |
+          cd backend
+          npm install
+
+      - name: Run Tests (Backend)
+        run: |
+          cd backend
+          npm test 
