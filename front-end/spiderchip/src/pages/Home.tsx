@@ -18,7 +18,7 @@ const Home = () => {
 
   return (
     <div className={styles.container}>
-      <h1 className={styles.title}>SPIDERCHIP</h1>
+      <h1 className={styles.title}>SPiderchip</h1>
       <p className={styles.subtitle}>an algorithms game</p>
       <button className={styles.startButton} onClick={handleStartClick}>
         START
