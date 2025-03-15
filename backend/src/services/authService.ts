@@ -1,41 +1,91 @@
-import pool from "../config/db";
+import prisma from "../config/db";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import globalConfig from "../config/global";
-import { User, UserAuth, UserResponse } from "../models/User";
+import { User, UserResponse } from "../models/User";
+import { Role } from "../config/roles";
+import { ConflictError, InternalServerError, NotFoundError, UnauthorizedError } from "../errors";
 
 export const registerUser = async (user: Omit<User, "id" | "created_at" | "updated_at">): Promise<UserResponse> => {
-    const {first_name, last_name, email, password} = user;
-    const hashedPassword = await bcrypt.hash(password, 10);
-    const { rows } = await pool.query(
-        "INSERT INTO users (first_name, last_name, email, password) VALUES ($1, $2, $3, $4) RETURNING id",
-        [first_name, last_name, email, hashedPassword]
-    );
-    return rows[0];
+    const { username, email, password } = user;
+
+    const existingUser = await prisma.users.findUnique({
+        where: { email }
+    });
+    if (existingUser) {
+        throw new ConflictError("User already exists");
+    }
+
+    try {
+        const hashed_password = await bcrypt.hash(password, 10);
+    
+        const newUser = await prisma.users.create({
+            data: {
+                username,
+                email,
+                hashed_password,
+                roles: {
+                    connect: { name: Role.USER }
+                }
+            },
+            select: { id: true }
+        });
+
+        const token = jwt.sign({ id: newUser.id }, globalConfig.jwt.secret, {
+            expiresIn: globalConfig.jwt.expiresIn
+        });
+
+        return { token };
+    } catch (error) {
+        throw new InternalServerError("Failed to register user");
+    }
 };
 
-export const loginUser = async (user: Pick<User, "email" | "password">): Promise<{id: string; token: string} | null> => {
-    const { rows } = await pool.query<UserAuth>("SELECT id, password FROM users WHERE email = $1", [user.email]);
-
-    if (rows.length === 0) return null;
-
-    const dbUser = rows[0];
-    const isValidPassword = await bcrypt.compare(user.password, dbUser.password);
-
-    if (!isValidPassword) return null;
-
-    const token = jwt.sign({ id: dbUser.id, email: dbUser.email }, globalConfig.jwt.secret, {
-        expiresIn: globalConfig.jwt.expiresIn
+export const loginUser = async (user: Pick<User, "email" | "password">): Promise<UserResponse | null> => {
+    const userRecord = await prisma.users.findUnique({
+        where: { email: user.email },
+        select: { id: true, hashed_password: true }
     });
 
-    return { id: dbUser.id, token };
+    if (!userRecord) {
+        throw new NotFoundError("User not found.");
+    };
+
+    const isValidPassword = await bcrypt.compare(user.password, userRecord.hashed_password);
+    if (!isValidPassword) {
+        throw new UnauthorizedError("Invalid password");
+    };
+
+    try {
+        const token = jwt.sign({ id: userRecord.id }, globalConfig.jwt.secret, {
+            expiresIn: globalConfig.jwt.expiresIn
+        });
+    
+        return { token };
+    } catch (error) {
+        throw new InternalServerError("Failed to generate authentication token");
+    }
 };
 
-export const getCurrentUser = async (userId: string): Promise<Omit<User, "id" | "password" | "created_at" | "updated_at"> | null> => {
-    const { rows } = await pool.query<Omit<User, "password">>(
-      "SELECT first_name, last_name, email FROM users WHERE id = $1",
-      [userId]
-    );
+export const getCurrentUser = async (userId: string): Promise<Omit<User, "id" | "password" | "created_at" | "updated_at"> | null>=> {
+    const user = await prisma.users.findUnique({
+        where: { id: userId },
+        select: {
+            username: true,
+            email: true,
+            roles: {
+                select: { name: true }
+            }
+        }
+    });
+    
+    if (!user) {
+        throw new NotFoundError("User not found.");
+    };
   
-    return rows.length ? rows[0] : null;
+    return { 
+        username: user.username,
+        email: user.email,
+        role: user.roles?.name
+     };
 };

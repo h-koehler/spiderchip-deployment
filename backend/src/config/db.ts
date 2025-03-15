@@ -1,8 +1,5 @@
-import { Pool } from "pg";
-import globalConfig from "./global";
+import { PrismaClient } from "@prisma/client";
 
-const pool = new Pool({
-    connectionString: globalConfig.db.connectionString
-});
+const prisma = new PrismaClient();
 
-export default pool;
+export default prisma;
