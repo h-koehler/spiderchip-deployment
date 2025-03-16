@@ -14,7 +14,7 @@ export const getPrisma = async (): Promise<PrismaClient> => {
             console.log("📢 Using Test Prisma Client");
             prismaInstance = prismaTestClient;
         } catch (error) {
-            console.error("Error loading test Prisma Client:", error);
+            console.log("Error loading test Prisma Client:", error);
             prismaInstance = new PrismaClient(); // Fallback to avoid crashes
         }
     } else {

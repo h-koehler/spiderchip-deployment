@@ -9,7 +9,6 @@ export const register = async (req: Request, res: Response, next: NextFunction) 
     const newUser = await registerUser(user);
     res.status(201).json(newUser);
   } catch (error) {
-    console.error(error);
     next(error);
   }
 };
@@ -20,7 +19,6 @@ export const login = async (req: Request, res: Response, next: NextFunction) => 
     const authData = await loginUser(user);
     res.status(200).json(authData);
   } catch (error) {
-    console.error(error);
     next(error);
   }
 };
@@ -34,7 +32,6 @@ export const currentUser = async (req: Request, res: Response, next: NextFunctio
     const user = await getCurrentUser(req.user.id);
     res.status(200).json(user);
   } catch (error) {
-    console.error(error);
     next(error);
   }
 };

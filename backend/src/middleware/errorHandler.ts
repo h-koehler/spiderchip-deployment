@@ -14,7 +14,7 @@ export const errorHandler = (
     return res.status(err.statusCode).send({ errors: err.serializeErrors() });
   }
 
-  console.error(`[ERROR] ${err.message}`);
+  console.log(`[ERROR] ${err.message}`);
 
   // If it's an unknown error, respond with a generic 500 error
   res.status(500).send({
