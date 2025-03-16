@@ -16,7 +16,7 @@ export const authenticateJWT = async (req: Request, res: Response, next: NextFun
   const authHeader = req.header("Authorization");
 
   if (!authHeader || !authHeader.startsWith("Bearer ")) {
-    throw new UnauthorizedError("Access denied. No token provided.");
+    return next(new UnauthorizedError("Access denied. No token provided."));
   }
 
   const token = authHeader.split(" ")[1];
@@ -36,7 +36,7 @@ export const authenticateJWT = async (req: Request, res: Response, next: NextFun
     });
 
     if (!user) {
-      throw new ForbiddenError("User not found.");
+      return next(new ForbiddenError("User not found."));
     }
 
     req.user = { 
@@ -47,6 +47,6 @@ export const authenticateJWT = async (req: Request, res: Response, next: NextFun
 
     next();
   } catch (err) {
-    new ForbiddenError("Invalid or expired token");
+    return next(new ForbiddenError("Invalid or expired token"));
   }
 };
