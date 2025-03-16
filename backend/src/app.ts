@@ -16,8 +16,8 @@ app.use(helmet());
 
 app.use("/api", routes);
 
-app.all("*", async () => {
-  throw new NotFoundError();
+app.all("*", async (res, req, next) => {
+  return next(new NotFoundError());
 });
 
 app.use(errorHandler as express.ErrorRequestHandler);
