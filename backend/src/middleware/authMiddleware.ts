@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
 import globalConfig from "../config/global";
-import prisma from "../config/db";
+import { getPrisma } from "../config/db";
 import { Role } from "../config/roles";
 import { ForbiddenError, UnauthorizedError } from "../errors";
 
@@ -13,6 +13,7 @@ declare module "express-serve-static-core" {
 }
 
 export const authenticateJWT = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  const prisma = await getPrisma();
   const authHeader = req.header("Authorization");
 
   if (!authHeader || !authHeader.startsWith("Bearer ")) {

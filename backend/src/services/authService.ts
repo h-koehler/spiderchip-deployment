@@ -1,13 +1,15 @@
-import prisma from "../config/db";
+import { getPrisma } from "../config/db";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import globalConfig from "../config/global";
-import { User, UserResponse } from "../models/User";
+import { UserRequest, UserResponse } from "../models/User";
 import { Role } from "../config/roles";
 import { ConflictError, InternalServerError, NotFoundError, UnauthorizedError } from "../errors";
 
-export const registerUser = async (user: Omit<User, "id" | "created_at" | "updated_at">): Promise<UserResponse> => {
+export const registerUser = async (user: UserRequest): Promise<UserResponse> => {
+    const prisma = await getPrisma();
     const { username, email, password } = user;
+    console.log(JSON.stringify(user));
 
     const existingUser = await prisma.users.findUnique({
         where: { email }
@@ -37,11 +39,14 @@ export const registerUser = async (user: Omit<User, "id" | "created_at" | "updat
 
         return { token };
     } catch (error) {
+        console.log(error);
         throw new InternalServerError("Failed to register user");
     }
 };
 
-export const loginUser = async (user: Pick<User, "email" | "password">): Promise<UserResponse | null> => {
+export const loginUser = async (user: Pick<UserRequest, "email" | "password">): Promise<UserResponse | null> => {
+    const prisma = await getPrisma();
+
     const userRecord = await prisma.users.findUnique({
         where: { email: user.email },
         select: { id: true, hashed_password: true }
@@ -67,7 +72,8 @@ export const loginUser = async (user: Pick<User, "email" | "password">): Promise
     }
 };
 
-export const getCurrentUser = async (userId: string): Promise<Omit<User, "id" | "password" | "created_at" | "updated_at"> | null>=> {
+export const getCurrentUser = async (userId: string): Promise<Omit<UserRequest, | "password"> & { role: string } | null>=> {
+    const prisma = await getPrisma();
     const user = await prisma.users.findUnique({
         where: { id: userId },
         select: {

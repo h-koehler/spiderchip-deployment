@@ -2,10 +2,10 @@ export interface User {
     id: string;
     username: string;
     email: string;
-    password: string;
-    role?: string;
-    created_at?: Date;
-    updated_at: Date;
+    hashed_password: string;
+    role_id: string;
+    created_at: Date | null;
+    updated_at: Date | null;
 }
 
 export interface UserAuth {
@@ -13,7 +13,13 @@ export interface UserAuth {
     email: string;
     hashed_password: string;
 }
-  
+
+export interface UserRequest {
+    username: string;
+    email: string;
+    password: string;
+}
+
 export interface UserResponse {
     token: string;
 }

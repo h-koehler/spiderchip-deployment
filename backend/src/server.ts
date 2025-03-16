@@ -1,11 +1,12 @@
 import app from "./app";
-import prisma from "./config/db";
+import { getPrisma } from "./config/db";
 import globalConfig from "./config/global";
 
 const PORT = globalConfig.app.port;
 
 const startServer = async () => {
   try {
+    const prisma = await getPrisma();
     await prisma.$connect();
     console.log("✅ Database connected successfully");
 

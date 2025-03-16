@@ -1,151 +1,83 @@
 import request from "supertest";
 import app from "../../app";
+import { createTestUser, createAdminUser, getTestUserDTO } from "../../test/repositories";
+import { getPrisma } from "../../config/db";
+import { User, UserRequest } from "../../models/User";
+import { loginUser } from "../../services/authService";
 
-describe("Auth Controller", () => {
-    const validUser = {
-        first_name: "Spiderchip",
-        last_name: "User",
-        email: "user@spiderchip.com",
-        password: "TestPassword123!",
-    };
+describe("Auth Controller Tests", () => {
+    let testUser: UserRequest;
+    let adminUser: UserRequest;
+    const BASE_URI = "/api/auth"
 
-    describe("User Registration Test Suit", () => {
-        it("should register a new user and return user details", async () => {
-            console.log(validUser);
-            const res = await request(app)
-                .post("/api/auth/register")
-                .send(validUser);
-
-            console.log(res.body);
-
-            expect(res.body).toHaveProperty("id");
-        });
-
-        it("should return 400 if first_name is missing", async () => {
-            const res = await request(app)
-                .post("/api/auth/register")
-                .send({ ...validUser, first_name: "" })
-                .expect(400);
-        
-            expect(res.body).toHaveProperty("errors");
-            expect(res.body.errors).toContain("First name is required");
-        });
-        
-        it("should return 400 if last_name is missing", async () => {
-            const res = await request(app)
-                .post("/api/auth/register")
-                .send({ ...validUser, last_name: "" })
-                .expect(400);
-
-            expect(res.body).toHaveProperty("errors");
-            expect(res.body.errors).toContain("Last name is required");
-        });
-
-        it("should return 400 if email is missing", async () => {
-            const res = await request(app)
-                .post("/api/auth/register")
-                .send({ ...validUser, email: "" })
-                .expect(400);
-
-            expect(res.body).toHaveProperty("errors");
-            expect(res.body.errors).toContain("Email is required");
-        });
-        
-        it("should return 400 if email format is invalid", async () => {
-            const res = await request(app)
-                .post("/api/auth/register")
-                .send({ ...validUser, email: "invalid-email" })
-                .expect(400);
-
-            expect(res.body).toHaveProperty("errors");
-            expect(res.body.errors).toContain("Invalid email format");
-        });
-
-        it("should return 400 if password is missing", async () => {
-            const res = await request(app)
-                .post("/api/auth/register")
-                .send({ ...validUser, password: "" })
-                .expect(400);
-
-            expect(res.body).toHaveProperty("errors");
-            expect(res.body.errors).toContain("Password is required");
-        });
-        
-        it("should return 400 if password is too short", async () => {
-            const res = await request(app)
-                .post("/api/auth/register")
-                .send({ ...validUser, password: "Pass12" }) // 6 characters only
-                .expect(400);
-
-            expect(res.body).toHaveProperty("errors");
-            expect(res.body.errors).toContain("Password must be at least 8 characters long");
-        });
-
-        it("should return 400 if password does not contain an uppercase letter", async () => {
-            const res = await request(app)
-                .post("/api/auth/register")
-                .send({ ...validUser, password: "password123" }) // No uppercase
-                .expect(400);
-
-            expect(res.body).toHaveProperty("errors");
-            expect(res.body.errors).toContain("Password must contain at least one uppercase letter and one number");
-        });
-        
-        it("should return 400 if password does not contain a number", async () => {
-            const res = await request(app)
-                .post("/api/auth/register")
-                .send({ ...validUser, password: "PasswordOnly" }) // No number
-                .expect(400);
-
-            expect(res.body).toHaveProperty("errors");
-            expect(res.body.errors).toContain("Password must contain at least one uppercase letter and one number");
-        });
+    beforeAll(async () => {
+        testUser = await createTestUser();
+        adminUser = await createAdminUser();
     });
 
-    describe("User Login Test Suite", () => {
-        beforeAll(async () => {
-            // Register user before running login tests
-            await request(app).post("/api/auth/register").send(validUser);
-        });
-
-        it("should login an existing user and return a token", async () => {
-            const res = await request(app)
-            .post("/api/auth/login")
-            .send({ email: validUser.email, password: validUser.password })
-            .expect(200);
-
-            expect(res.body).toHaveProperty("token");
-        });
-
-        it("should return 400 if email is missing", async () => {
-            const res = await request(app)
-            .post("/api/auth/login")
-            .send({ password: validUser.password })
-            .expect(400);
-
-            expect(res.body).toHaveProperty("errors");
-            expect(res.body.errors).toContain("Email is required");
-        });
-
-        it("should return 400 if password is missing", async () => {
-            const res = await request(app)
-            .post("/api/auth/login")
-            .send({ email: validUser.email })
-            .expect(400);
-
-            expect(res.body).toHaveProperty("errors");
-            expect(res.body.errors).toContain("Password is required");
-        });
-
-        it("should return 401 for invalid credentials", async () => {
-            const res = await request(app)
-            .post("/api/auth/login")
-            .send({ email: "invalid@example.com", password: "wrongpass" })
-            .expect(400);
-
-            expect(res.body).toHaveProperty("errors");
-            expect(res.body.errors).toContain("Invalid email or password");
-        });
+    afterAll(async () => {
+        const prisma = await getPrisma();
+        await prisma.users.deleteMany();
     });
 
+    test("should register a new user", async () => {
+        const { hashed_password, ...user } = await getTestUserDTO();
+        const response = await request(app).post(`${BASE_URI}/register`).send(user);
+        expect(response.status).toBe(201);
+        expect(response.body).toHaveProperty("token");
+    });
+
+    test("should not allow duplicate registration", async () => {
+        const response = await request(app).post(`${BASE_URI}/register`).send({
+          username: testUser.username,
+          email: testUser.email,
+          password: testUser.password
+        });
+        expect(response.status).toBe(409);
+        expect(response.body.errors).toContainEqual({ message: "User already exists" });
+    });
+
+    test("should authenticate an existing user", async () => {
+        const response = await request(app).post(`${BASE_URI}/login`).send({
+            email: testUser.email,
+            password: testUser.password,
+        });
+
+        expect(response.status).toBe(200);
+        expect(response.body).toHaveProperty("token");
+    });
+
+    test("should reject login with incorrect password", async () => {
+        const response = await request(app).post(`${BASE_URI}/login`).send({
+            email: testUser.email,
+            password: "WrongPassword123",
+        });
+
+        expect(response.status).toBe(401);
+        expect(response.body.errors).toContainEqual({ message: "Invalid password" });
+    });
+
+    test("should return the current user", async () => {
+        // First, log in to get a valid token
+        const loginResponse = await loginUser({
+          email: testUser.email,
+          password: testUser.password
+        });
+
+        const token = loginResponse?.token;
+
+        // Use token to get current user details
+        const response = await request(app).get(`${BASE_URI}/current-user`)
+            .set("Authorization", `Bearer ${token}`);
+
+        expect(response.status).toBe(200);
+        expect(response.body).toHaveProperty("email", testUser.email);
+    });
+
+    test("should deny access to current-user without token", async () => {
+        const response = await request(app).get(`${BASE_URI}/current-user`);
+
+        expect(response.status).toBe(401);
+        expect(response.body.errors).toContainEqual({ message: "Access denied. No token provided." });
+    });
 });
