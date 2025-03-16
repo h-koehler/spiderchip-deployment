@@ -1,5 +1,4 @@
 import prisma from "../config/db";
-import { Role } from "../config/roles";
 import { ConflictError, InternalServerError, NotFoundError } from "../errors";
 
 /**
@@ -94,6 +93,15 @@ export const deleteRole = async (id: string) => {
 
     if (!existingRole) {
         throw new NotFoundError(`Role with ID ${id} not found`);
+    }
+
+    // Check if any users are using this role
+    const usersWithRole = await prisma.users.count({
+        where: { role_id: id }
+    });
+
+    if (usersWithRole > 0) {
+        throw new ConflictError(`Cannot delete role. ${usersWithRole} user(s) are assigned to this role.`);
     }
 
     try {

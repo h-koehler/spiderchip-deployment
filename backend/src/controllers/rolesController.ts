@@ -30,50 +30,50 @@ export const getRole = async (req: Request, res: Response, next: NextFunction) =
 /**
  * Get role by Name
  */
-export const getRoleByName = async (req: Request, res: Response) => {
+export const getRoleByName = async (req: Request, res: Response, next: NextFunction) => {
     const { name } = req.params;
     try {
         const role = await roleService.getRoleByName(name);
         res.json(role);
     } catch (error) {
-        throw new InternalServerError();
+        next(error);
     }
 };
 
 /**
  * Create a new role
  */
-export const createRole = async (req: Request, res: Response) => {
+export const createRole = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const role = await roleService.createRole(req.body);
         res.status(201).json(role);
     } catch (error) {
-        throw new InternalServerError();
+        next(error);
     }
 };
 
 /**
  * Update a role
  */
-export const updateRole = async (req: Request, res: Response) => {
+export const updateRole = async (req: Request, res: Response, next: NextFunction) => {
     const { id } = req.params;
     try {
         const updatedRole = await roleService.updateRole(id, req.body);
         res.json(updatedRole);
     } catch (error) {
-        throw new InternalServerError();
+        next(error);
     }
 };
 
 /**
  * Delete a role
  */
-export const deleteRole = async (req: Request, res: Response) => {
+export const deleteRole = async (req: Request, res: Response, next: NextFunction) => {
     const { id } = req.params;
     try {
         await roleService.deleteRole(id);
         res.json({ message: "Role deleted successfully" });
     } catch (error) {
-        throw new InternalServerError();
+        next(error);
     }
 };
