@@ -1,0 +1,8 @@
+.output-header {
+    background: #800000;
+    padding: .5em;
+}
+
+.output-header > img {
+    width: 2em;
+}
