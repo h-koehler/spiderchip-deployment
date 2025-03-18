@@ -1,0 +1,112 @@
+/* Overlay Background */
+.overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+  }
+  
+  /* Modal Window */
+  .modal {
+    width: 340px;
+    background-color: #c0c0c0; /* Windows 95 gray */
+    border: 3px solid black;
+    box-shadow: 5px 5px 0px black;
+    font-family: "Courier New", monospace;
+  }
+  
+  /* Title Bar */
+  .titleBar {
+    background-color: #800000; /* Dark Red */
+    color: white;
+    padding: 5px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-weight: bold;
+  }
+  
+  .titleText {
+    flex-grow: 1;
+    text-align: center;
+  }
+  
+  .windowIcon {
+    font-size: 1.2rem;
+  }
+  
+  .closeButton {
+    background: none;
+    border: none;
+    color: white;
+    font-size: 1rem;
+    cursor: pointer;
+  }
+  
+  /* Modal Content */
+  .modalContent {
+    padding: 15px;
+    text-align: left;
+  }
+  
+  /* Labels */
+  .label {
+    display: block;
+    font-size: 0.9rem;
+    font-weight: bold;
+    margin: 5px 0;
+  }
+  
+  /* Inputs */
+  .input {
+    width: 100%;
+    padding: 5px;
+    border: 2px inset gray;
+    background: white;
+    font-family: inherit;
+    font-size: 0.9rem;
+  }
+  
+  /* ✅ Error Message positioned below password input */
+  .error {
+    color: red;
+    font-size: 0.9rem;
+    text-align: center;
+    margin-top: 5px;
+    margin-bottom: 10px; /* Space before the login button */
+  }
+  
+  /* Login/Register Button */
+  .loginButton {
+    display: block;
+    width: 100%;
+    padding: 5px;
+    border: 2px outset gray;
+    background: #d9d9d9;
+    font-size: 1rem;
+    font-weight: bold;
+    cursor: pointer;
+    margin-top: 5px;
+  }
+  
+  .loginButton:active {
+    border: 2px inset gray;
+  }
+  
+  /* Create Account Link */
+  .createAccount {
+    display: block;
+    text-align: center;
+    font-size: 0.8rem;
+    margin-top: 10px;
+    text-decoration: none;
+    color: black;
+    cursor: pointer;
+  }
+  
