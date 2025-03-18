@@ -8,7 +8,6 @@ import {useEffect, useState} from "react";
 export default function LevelSelection(props: { setSelectedLevel: (level: LevelItem | null) => void }) {
     const [selectedLevel, setLocalSelectedLevel] = useState<LevelItem | null>(null)
 
-    // temporary, implement to retrieve list of levels
     const [levelList, setLevelList] = useState<LevelItem[]>([
         { id: 1, title: "Level 1", category: "Category 1", description: "Description 1", status: "completed" },
         { id: 2, title: "Level 2", category: "Category 2", description: "Description 2", status: "skipped" },
@@ -16,9 +15,14 @@ export default function LevelSelection(props: { setSelectedLevel: (level: LevelI
         { id: 4, title: "Level 4", category: "Category 4", description: "Description 4", status: "not-available" },
     ]);
 
-    // const levelButtons = levelList.map((level) => (
-    //     <LevelSelectButton level={level} setSelectedLevel={setLocalSelectedLevel}/>
-    // ));
+    // TODO: implement to retrieve list of levels instead of static list
+    // useEffect(() => {
+    //     const fetchLevels = async() => {
+    //         try {
+    //             const response = await fetch("api/users/level")
+    //         }
+    //     }
+    // })
 
     const updateLevelStatus = (levelId: number, newStatus: string) => {
         setLevelList( prevLevels =>

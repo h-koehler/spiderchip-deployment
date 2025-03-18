@@ -7,6 +7,7 @@ export default function PuzzleVisualization() {
             <div className="header">
                 <img src={VizIcon} />
             </div>
+            {/*TODO: Implement*/}
         </div>
     )
 }

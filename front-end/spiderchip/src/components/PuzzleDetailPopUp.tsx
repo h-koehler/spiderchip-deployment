@@ -12,6 +12,7 @@ export default function PuzzleDetailsPopUp(props: {
     const handleSkippedChange = () => {
         const newStatus = props.level.status === "skipped" ? "available" : "skipped";
         props.updateLevelStatus(props.level.id, newStatus);
+        // TODO: update database
     }
 
     const handleStartGame = () => {

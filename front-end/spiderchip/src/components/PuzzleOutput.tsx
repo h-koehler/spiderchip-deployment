@@ -7,6 +7,7 @@ export default function PuzzleOutput() {
             <div className="header">
                 <img src={OutputIcon} />
             </div>
+            {/*TODO: Implement*/}
         </div>
     )
 }

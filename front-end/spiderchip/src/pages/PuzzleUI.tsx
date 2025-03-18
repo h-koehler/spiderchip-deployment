@@ -21,6 +21,9 @@ export default function PuzzleUI(props: { level: LevelItem }) {
         return () => document.removeEventListener("keydown", handleEscKey);
     }, [])
 
+    // TODO: Implement saving as player makes changes
+    // TODO: Fix issue where "skipped" status on LevelSelect isn't saved when returning to page
+
     return (
         <div className="puzzle-layout">
             <div className="input-container">
@@ -29,6 +32,7 @@ export default function PuzzleUI(props: { level: LevelItem }) {
             <div className="visualization-container">
                 <PuzzleVisualization/>
             </div>
+            {/*TODO: Implement buttons*/}
             <div className="output-container">
                 <PuzzleOutput/>
             </div>

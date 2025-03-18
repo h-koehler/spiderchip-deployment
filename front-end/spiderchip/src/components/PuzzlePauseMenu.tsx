@@ -25,7 +25,9 @@ export default function PuzzlePauseMenu( props: {
                 </div>
                 <div className="buttons">
                     <button className="primary-button" onClick={() => props.setMenuIsOpen(false)}>RESUME</button>
+                    {/*TODO: Implement settings pop up window*/}
                     <button className="primary-button">SETTINGS</button>
+                    {/*TODO: Implement quit function; return to level select*/}
                     <button className="primary-button">QUIT</button>
                 </div>
             </div>

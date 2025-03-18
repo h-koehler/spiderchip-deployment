@@ -7,6 +7,7 @@ export default function PuzzleInput() {
             <div className="header">
                 <img src={InputIcon} />
             </div>
+            {/*TODO: Implement*/}
         </div>
     )
 }

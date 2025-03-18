@@ -8,12 +8,6 @@ export default function LevelSelectButton(props: {
     setSelectedLevel: (level: LevelItem) => void,
     updateLevelStatus: (levelId: number, newStatus: string) => void;
 }) {
-    // const navigate = useNavigate();
-
-    // const getLevelClass = (status: string) => {
-    //     return status === "not-available" ? "not-available" : "available"
-    // }
-
     const handleLevelOnClick = () => {
         props.setSelectedLevel(props.level)
     }
