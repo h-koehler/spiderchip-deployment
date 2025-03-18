@@ -1,12 +1,31 @@
-@import url('https://fonts.cdnfonts.com/css/perfect-dos-vga-437');
+@import url('https://fonts.googleapis.com/css2?family=Fira+Code:wght@300..700&display=swap');
+@font-face {
+    font-family: "Perfect DOS VGA 437";
+    src: url("../../public/fonts/Perfect DOS VGA 437.ttf");
+}
+@font-face{
+    font-family: W95FA;
+    src: url("../../public/fonts/W95FA.otf") format("opentype");
+}
 
 :root {
-
+    --title-font-family: "Perfect DOS VGA 437", serif;
+    --default-font-family: "W95FA", sans-serif;
+    --code-font-family: "Fira Code", monospace;
+    --default-font-size: 1em;
+    --default-text-color: black;
+    --default-background: #737171;
+    --secondary-background-color: #CCCCCC;
 }
 
 body {
+    background: var(--default-background);
+    color: var(--default-text-color);
+    font-family: var(--default-font-family), sans-serif;
+    font-size: var(--default-font-size);
     margin: 0;
     padding: 0;
+    height: 100vh;
 }
 
 h1,
@@ -16,4 +35,50 @@ h4,
 p {
     margin: 0;
     padding: 0;
+}
+
+h1,
+h2 {
+    font-family: var(--title-font-family), serif;
+    font-size: 3em;
+}
+
+h3,
+h4 {
+    font-family: var(--default-font-family), serif;
+    font-size: 2em;
+}
+
+.primary-button {
+    background: #C0C0C0;
+    font-size: 1.25em;
+    padding: .25em .5em;
+    font-family: var(--default-font-family), serif;
+    font-kerning: normal;
+    border-top: .1em solid #E0E0E0;
+    border-left: .1em solid #E0E0E0;
+    border-right: .1em solid #808080;
+    border-bottom: .1em solid #808080;
+    box-shadow:
+            .1em 0 black,
+            0 .1em black,
+            .1em .1em black,
+            -.1em 0 white,
+            0 -.1em white,
+            -.1em -.1em white;
+}
+
+.primary-button:hover {
+    cursor: pointer;
+    border-top: .1em solid #808080;
+    border-left: .1em solid #808080;
+    border-right: .1em solid #E0E0E0;
+    border-bottom: .1em solid #E0E0E0;
+    box-shadow:
+            .1em 0 white,
+            0 .1em white,
+            .1em .1em white,
+            -.1em 0 black,
+            0 -.1em black,
+            -.1em -.1em black;
 }

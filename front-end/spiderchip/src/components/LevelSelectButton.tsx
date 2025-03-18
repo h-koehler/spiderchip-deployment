@@ -1,23 +1,32 @@
 import {LevelItem} from "../types";
 import "./LevelSelectButton.css"
-import {useState} from "react";
-import { useNavigate } from "react-router-dom";
+import CompletedIcon from '../assets/images/completed-icon.png';
+import SkippedIcon from '../assets/images/skipped-icon.png';
 
-export default function LevelSelectButton(props: { level: LevelItem }) {
-    const navigate = useNavigate()
-    const [status, setStatus] = useState<string>(props.level.status)
-    const idString = String(props.level.id)
+export default function LevelSelectButton(props: {
+    level: LevelItem,
+    setSelectedLevel: (level: LevelItem) => void,
+    updateLevelStatus: (levelId: number, newStatus: string) => void;
+}) {
+    // const navigate = useNavigate();
 
     // const getLevelClass = (status: string) => {
     //     return status === "not-available" ? "not-available" : "available"
     // }
 
     const handleLevelOnClick = () => {
-        navigate('/puzzle-ui', {state: props.level})
+        props.setSelectedLevel(props.level)
     }
 
-    const handleSkippedChange = () => {
-        setStatus(prevStatus => (prevStatus === "skipped") ? "available" : "skipped")
+    const renderStatusIcon = () => {
+        switch (props.level.status) {
+            case "completed":
+                return <img src={CompletedIcon}/>
+            case "skipped":
+                return <img src={SkippedIcon}/>
+            default:
+                return null;
+        }
     }
 
     return (
@@ -25,24 +34,14 @@ export default function LevelSelectButton(props: { level: LevelItem }) {
             <button
                 className="level-button"
                 onClick={() => handleLevelOnClick()}
-                disabled={status === "not-available"}>
-                <h3>{props.level.title}</h3>
-                <h4>{props.level.category}</h4>
+                disabled={props.level.status === "not-available"}
+            >
+                <h2>{props.level.title}</h2>
+                <h3>{props.level.category}</h3>
+                <div className="status-icon">
+                    {renderStatusIcon()}
+                </div>
             </button>
-            <div className="skipped-checkbox">
-                {status === "completed" ? (
-                    <span>Completed</span>
-                ) : (
-                <input
-                    type="checkbox"
-                    name={props.level.title}
-                    id={idString}
-                    onChange={() => handleSkippedChange()}
-                    checked={status === "skipped"}
-                    disabled={status === "completed" || status === "not-available"}/>
-                )}
-                {status !== "completed" && <label>Skip</label>}
-            </div>
         </li>
     )
 }
