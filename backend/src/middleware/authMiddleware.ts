@@ -1,29 +1,53 @@
 import { Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
 import globalConfig from "../config/global";
+import { getPrisma } from "../config/db";
+import { Role } from "../config/roles";
+import { ForbiddenError, UnauthorizedError } from "../errors";
 
 // Extend Express Request to include `user`
 declare module "express-serve-static-core" {
   interface Request {
-    user?: any;
+    user?: { id: string; email: string; role: Role };
   }
 }
 
-export const authenticateJWT = (req: Request, res: Response, next: NextFunction): void => {
+export const authenticateJWT = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  const prisma = await getPrisma();
   const authHeader = req.header("Authorization");
 
   if (!authHeader || !authHeader.startsWith("Bearer ")) {
-    res.status(401).json({ error: "Access denied. No token provided." });
-    return;
+    return next(new UnauthorizedError("Access denied. No token provided."));
   }
 
   const token = authHeader.split(" ")[1];
 
   try {
-    const decoded = jwt.verify(token, globalConfig.jwt.secret);
-    req.user = decoded;
+    const decoded = jwt.verify(token, globalConfig.jwt.secret) as { id: string };
+    
+    const user = await prisma.users.findUnique({
+      where: { id: decoded.id },
+      select: {
+        id: true,
+        email: true,
+        roles: {
+          select: { name: true }
+        }
+      }
+    });
+
+    if (!user) {
+      return next(new ForbiddenError("User not found."));
+    }
+
+    req.user = { 
+      id: user.id, 
+      email: user.email, 
+      role: user.roles?.name as Role,
+    };
+
     next();
   } catch (err) {
-    res.status(403).json({ error: "Invalid or expired token" });
+    return next(new ForbiddenError("Invalid or expired token"));
   }
 };

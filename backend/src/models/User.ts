@@ -1,19 +1,25 @@
 export interface User {
     id: string;
-    first_name: string;
-    last_name: string;
+    username: string;
     email: string;
-    password: string;
-    created_at?: Date;
-    updated_at: Date;
+    hashed_password: string;
+    role_id: string;
+    created_at: Date | null;
+    updated_at: Date | null;
 }
 
 export interface UserAuth {
     id: string;
     email: string;
+    hashed_password: string;
+}
+
+export interface UserRequest {
+    username: string;
+    email: string;
     password: string;
 }
-  
+
 export interface UserResponse {
-    id: string;
+    token: string;
 }
