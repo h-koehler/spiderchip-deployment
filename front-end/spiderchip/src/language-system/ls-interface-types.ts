@@ -1,5 +1,3 @@
-import * as PT from "./parser-types";
-
 export class Puzzle {
     slotCount: number; // number of varslots present
     defaultSlotNames: string[]; // default slot names to use, `slotCount` long, undefined if no name for that slot
@@ -50,7 +48,7 @@ export interface SpiderRuntime {
     /**
      * Obtain linter errors from parse result. Empty array if no errors.
      */
-    lint(): PT.ErrorMessage[];
+    lint(): SpiderError[];
 
     /**
      * Obtain the current state of the runtime environment.
@@ -68,6 +66,17 @@ export interface SpiderRuntime {
      */
     step(): undefined;
 }
+
+export class SpiderError {
+    line: number;
+    msg: string;
+
+    constructor(line: number, msg: string) {
+        this.line = line;
+        this.msg = msg;
+    }
+}
+
 
 export class SpiderState {
     state: SpiderStateEnum; // current parser state, see explanations of each on the enum
