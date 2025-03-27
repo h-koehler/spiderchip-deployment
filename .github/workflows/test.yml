@@ -1,4 +1,4 @@
-name: Run Tests on PR
+name: Run Jest Tests on PR to Main
 
 on:
   pull_request:
@@ -11,7 +11,6 @@ on:
 jobs:
   frontend-tests:
     name: Run Frontend Tests
-    if: contains(github.event.pull_request.changed_files, 'front-end/spiderchip/')
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -36,7 +35,6 @@ jobs:
 
   backend-tests:
     name: Run Backend Tests
-    if: contains(github.event.pull_request.changed_files, 'backend/')
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -57,4 +55,4 @@ jobs:
       - name: Run Tests (Backend)
         run: |
           cd backend
-          npm test 
+          npm run test:ci 

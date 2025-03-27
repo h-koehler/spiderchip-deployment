@@ -3,6 +3,8 @@ import cors from "cors";
 import helmet from "helmet";
 import routes from "./routes";
 import dotenv from "dotenv";
+import { NotFoundError } from "./errors";
+import { errorHandler } from "./middleware/errorHandler";
 
 dotenv.config();
 
@@ -14,9 +16,10 @@ app.use(helmet());
 
 app.use("/api", routes);
 
-app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
-  console.error("Unhandled Error:", err);
-  res.status(500).json({ error: "Internal Server Error" });
+app.all("*", async (res, req, next) => {
+  return next(new NotFoundError());
 });
+
+app.use(errorHandler as express.ErrorRequestHandler);
 
 export default app;
