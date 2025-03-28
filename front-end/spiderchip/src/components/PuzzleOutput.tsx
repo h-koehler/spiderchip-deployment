@@ -1,13 +1,21 @@
 import "./PuzzleOutput.css"
 import OutputIcon from "../assets/images/output-icon.png";
 
-export default function PuzzleOutput() {
+interface PuzzleOutputProps {
+    output: string;
+}
+
+export default function PuzzleOutput({ output }: PuzzleOutputProps) {
     return (
         <div className="output">
             <div className="header">
                 <img src={OutputIcon} />
             </div>
-            {/*TODO: Implement*/}
+            <div className="output-content">
+                {output.split('\n').map((line, index) => (
+                    <p key={index}>&gt; {line}</p>
+                ))}
+            </div>
         </div>
     )
 }

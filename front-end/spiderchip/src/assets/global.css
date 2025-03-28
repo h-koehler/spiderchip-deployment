@@ -1,11 +1,11 @@
 @import url('https://fonts.googleapis.com/css2?family=Fira+Code:wght@300..700&display=swap');
 @font-face {
     font-family: "Perfect DOS VGA 437";
-    src: url("../../public/fonts/Perfect DOS VGA 437.ttf");
+    src: url("../../fonts/Perfect DOS VGA 437.ttf");
 }
 @font-face{
     font-family: W95FA;
-    src: url("../../public/fonts/W95FA.otf") format("opentype");
+    src: url("../../fonts/W95FA.otf") format("opentype");
 }
 
 :root {

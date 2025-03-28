@@ -97,7 +97,7 @@ export class SpiderState {
     }
 }
 
-enum SpiderStateEnum {
+export enum SpiderStateEnum {
     NEW,     // code is not yet running, but has passed parsing
     INVALID, // code failed parsing - see linter for errors
     ERROR,   // execution error - see `error` entry for details
