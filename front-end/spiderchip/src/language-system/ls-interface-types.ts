@@ -1,25 +1,38 @@
 export class Puzzle {
     slotCount: number; // number of varslots present
-    defaultSlotNames: string[]; // default slot names to use, `slotCount` long, undefined if no name for that slot
+    testCases: PuzzleTest[]; // test cases for this puzzle
+    defaultSlotNames: (string | null | undefined)[] | null; // default slot names to use, `slotCount` long, undefined/null if no name for that slot
     canEditSlots: boolean; // whether or not this puzzle allows editing initial slot values
     canRenameSlots: boolean; // whether or not this puzzle allows renaming slots
-    testCases: PuzzleTest[]; // test cases for this puzzle
 
     constructor(slotCount: number,
-        defaultSlotNames: string[],
+        testCases: PuzzleTest[],
+        defaultSlotNames: string[] | null = null,
         canEditSlots: boolean = false,
-        canRenameSlots: boolean = true,
-        testCases: PuzzleTest[]) {
+        canRenameSlots: boolean = true) {
         this.slotCount = slotCount;
+        this.testCases = testCases;
         this.defaultSlotNames = defaultSlotNames;
         this.canEditSlots = canEditSlots;
         this.canRenameSlots = canRenameSlots;
-        this.testCases = testCases;
     }
 }
 
 export class PuzzleTest {
-    // TODO: design (see what information is necessary during implementation)
+    objects: SpiderObject[];
+    slotValues: number[] | null; // `slotCount` long, null = "all zeroes", ignored if `canEditSlots` is true
+    inputQueue: number[];
+    expectedOutput: number[];
+
+    constructor(objects: SpiderObject[],
+        slotValues: number[] | null,
+        inputQueue: number[],
+        expectedOutput: number[]) {
+        this.objects = objects;
+        this.slotValues = slotValues;
+        this.inputQueue = inputQueue;
+        this.expectedOutput = expectedOutput;
+    }
 }
 
 export class CustomSlot {
@@ -32,6 +45,10 @@ export class CustomSlot {
         this.name = name;
         this.value = value;
     }
+
+    toProgramText(): string {
+        return `${this.slot} ${this.name ?? ""} ${this.value ?? ""}`;
+    }
 }
 
 export interface SpiderRuntime {
@@ -40,7 +57,7 @@ export interface SpiderRuntime {
      * It is a good idea to debounce code changes rather than spamming init for each keypress.
      * Do not randomly change the caseNum per init, instead keep using one until solved or dubious.
      *
-     * When initializing a puzzle, create this runtime, immediately call `init`, then `state`.
+     * When initializing a puzzle, create this runtime, IMMEDIATELY call `init`, then `state`.
      * This gives the setup for what the puzzle looks like.
      */
     init(text: string, variables: CustomSlot[], caseNum: number): undefined;
@@ -82,22 +99,26 @@ export class SpiderState {
     state: SpiderStateEnum; // current parser state, see explanations of each on the enum
     varslots: SpiderSlot[]; // current state of all variable slots
     objs: SpiderObject[]; // current state of all objects
+    input: number[]; // input not yet consumed
+    output: number[]; // cumulative output that has been sent
     line: number; // line number that was executed by the last call to step
     error: string | undefined; // if state is error, the error message
     failedCase: number | undefined; // if state is dubious, a failing case id
 
-    constructor(state: SpiderStateEnum, varslots: SpiderSlot[], objs: SpiderObject[], line: number,
-        error: string | undefined, failedCase: number | undefined) {
+    constructor(state: SpiderStateEnum, varslots: SpiderSlot[], objs: SpiderObject[], input: number[], output: number[],
+        line: number, error: string | undefined = undefined, failedCase: number | undefined = undefined) {
         this.state = state;
         this.varslots = varslots;
         this.objs = objs;
+        this.input = input;
+        this.output = output;
         this.line = line;
         this.error = error;
         this.failedCase = failedCase;
     }
 }
 
-enum SpiderStateEnum {
+export enum SpiderStateEnum {
     NEW,     // code is not yet running, but has passed parsing
     INVALID, // code failed parsing - see linter for errors
     ERROR,   // execution error - see `error` entry for details
@@ -109,7 +130,7 @@ enum SpiderStateEnum {
 
 export class SpiderSlot {
     value: number;
-    name: string | undefined;
+    name: string;
 
     constructor(value: number, name: string) {
         this.value = value;
@@ -126,6 +147,10 @@ export class SpiderObject {
         this.type = type;
         this.name = name;
         this.contents = contents;
+    }
+
+    toProgramText(): string {
+        return `${this.type} ${this.name} ${this.contents.join(" ")}`;
     }
 }
 

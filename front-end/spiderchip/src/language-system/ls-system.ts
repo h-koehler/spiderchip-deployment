@@ -1,0 +1,548 @@
+import * as LT from "./ls-interface-types";
+import * as PT from "./parser-types";
+import parse from "./parser";
+
+export default createRuntime;
+
+const MAX_ITERATIONS = 1000; // infinite loop threshold
+const ALLOW_EARLY_FAIL = true; // fail early for incorrect outputs (turn off for runtime debugging)
+
+/**
+ * Create an instance of a SpiderRuntime for the given puzzle.
+ * Immediately call `.init(...)` on the returned runtime to complete initialization.
+ */
+function createRuntime(puzzle: LT.Puzzle): LT.SpiderRuntime {
+    return new Runtime(puzzle);
+}
+
+class Runtime implements LT.SpiderRuntime {
+    puzzle: LT.Puzzle;
+    programText: string = "";
+    customVariables: LT.CustomSlot[] = [];
+    caseNum: number = 0;
+    failedCase: number | undefined = undefined;
+    primaryEngine: ExecutionEngine | undefined = undefined;
+
+    constructor(puzzle: LT.Puzzle) {
+        this.puzzle = puzzle;
+    }
+
+    init(text: string, variables: LT.CustomSlot[], caseNum: number): undefined {
+        this.programText = text;
+        this.customVariables = variables.map((s) => new LT.CustomSlot(s.slot, s.name, s.value)); // get our own!
+        this.caseNum = caseNum;
+        this.failedCase = undefined;
+        this.primaryEngine = new ExecutionEngine(this.puzzle, this.puzzle.testCases[caseNum], text, this.customVariables);
+    }
+
+    lint(): LT.SpiderError[] {
+        if (!this.primaryEngine) {
+            throw new Error("Runtime does not have an active engine. Did you forget to call .init()?");
+        }
+        return this.primaryEngine.lint();
+    }
+
+    state(): LT.SpiderState {
+        if (!this.primaryEngine) {
+            throw new Error("Runtime does not have an active engine. Did you forget to call .init()?");
+        }
+        const state = this.primaryEngine.state();
+        // if the engine is finished but we noticed another case failed, need to mutate to say "dubious" instead
+        if (state.state === LT.SpiderStateEnum.SUCCESS && this.failedCase !== undefined) {
+            state.failedCase = this.failedCase;
+            state.state = LT.SpiderStateEnum.DUBIOUS;
+        }
+        return state;
+    }
+
+    anim(): LT.SpiderAnimation[] {
+        if (!this.primaryEngine) {
+            throw new Error("Runtime does not have an active engine. Did you forget to call .init()?");
+        }
+        return this.primaryEngine.anim();
+    }
+
+    step(): undefined {
+        if (!this.primaryEngine) {
+            throw new Error("Runtime does not have an active engine. Did you forget to call .init()?");
+        }
+        this.primaryEngine.step();
+        if (this.primaryEngine.stateSimple() === LT.SpiderStateEnum.SUCCESS) {
+            // they passed one test, yes, but what about second test?
+            for (let i = 0; i < this.puzzle.testCases.length; i++) {
+                if (i === this.caseNum) {
+                    continue;
+                }
+                const engine = new ExecutionEngine(this.puzzle, this.puzzle.testCases[i], this.programText, this.customVariables);
+                do {
+                    engine.step();
+                } while (engine.stateSimple() === LT.SpiderStateEnum.RUNNING);
+                if (engine.stateSimple() !== LT.SpiderStateEnum.SUCCESS) {
+                    // uh oh! you failed one of the other test cases!
+                    this.failedCase = i;
+                    break;
+                }
+            }
+        }
+    }
+}
+
+class BenignHalt extends Error {
+    constructor(message: string) {
+        super(message);
+    }
+}
+
+class ExecutionEngine {
+    puzzle: LT.Puzzle;
+    test: LT.PuzzleTest;
+
+    lintErrors: readonly PT.ErrorMessage[];
+    labels: readonly PT.Label[];
+    text: readonly (PT.Line | undefined)[];
+
+    inputs: number[];
+    outputs: number[] = [];
+
+    rtState: LT.SpiderStateEnum;
+    haltReason: string | undefined = undefined; // reason why the runtime halted, e.g. "Division by zero."
+
+    iters: number = 0;
+    lastLine: number = 0;
+    tape: LT.SpiderSlot[];
+    objs: LT.SpiderObject[];
+
+    jumpTo: number | undefined = 0; // jump destination if we just ran a jump - MUST POINT TO A REAL LINE
+    shouldFollowIndent: boolean = false; // for if/else/while statements
+
+    constructor(puzzle: LT.Puzzle, test: LT.PuzzleTest, text: string, variables: LT.CustomSlot[]) {
+        this.puzzle = puzzle;
+        this.test = test;
+        this.inputs = test.inputQueue.slice();
+
+        // the user only enters the text segment - we create the data segment
+        const fullProgramText = [
+            "SPDR PROGRAM",
+            ".data",
+            `tapelength ${this.puzzle.slotCount}`,
+            this.getPuzzleDataText(variables),
+            ".text",
+            text
+        ].join("\n");
+
+        const parseResult = parse(fullProgramText);
+
+        // we always need to share the tape and objects, since the frontend needs to display it
+        this.tape = parseResult.data.tape.map((v) => new LT.SpiderSlot(v.value, v.name ?? ""));
+        this.objs = parseResult.data.objects.map((o) => new LT.SpiderObject(o.type, o.name, o.contents));
+
+        // preserve the remaining data out of that parsing
+        this.lintErrors = parseResult.errors;
+        this.labels = parseResult.data.labels;
+        this.text = parseResult.text;
+
+        // if it's valid let them know they can run, otherwise say it's invalid
+        this.rtState = parseResult.valid ? LT.SpiderStateEnum.NEW : LT.SpiderStateEnum.INVALID;
+        if (this.text.filter((x) => x !== undefined).length == 0) {
+            this.rtState = LT.SpiderStateEnum.FAIL; // no code!
+        }
+    }
+
+    lint(): LT.SpiderError[] {
+        // need to put it in a language they understand
+        return this.lintErrors.map((e) => new LT.SpiderError(e.line, e.msg));
+    }
+
+    state(): LT.SpiderState {
+        // need to copy everything so they can't mess with our internals
+        const retTape = this.tape.map((s) => new LT.SpiderSlot(s.value, s.name ?? ""));
+        const retObjs = this.objs.map((o) => new LT.SpiderObject(o.type, o.name, o.contents.slice()));
+        const retInps = this.inputs.slice();
+        const retOuts = this.outputs.slice();
+        return new LT.SpiderState(this.rtState, retTape, retObjs, retInps, retOuts, this.lastLine, this.haltReason);
+    }
+
+    stateSimple(): LT.SpiderStateEnum {
+        return this.rtState;
+    }
+
+    anim(): LT.SpiderAnimation[] {
+        // TODO: Not implemented. Not targeted for MVP.
+        return [];
+    }
+
+    step(): undefined {
+        if (this.rtState !== LT.SpiderStateEnum.NEW && this.rtState !== LT.SpiderStateEnum.RUNNING) {
+            return;
+        }
+
+        try {
+            this.iters++;
+            if (this.iters > MAX_ITERATIONS) {
+                throw new Error(`Exceeded maximum iterations (${MAX_ITERATIONS}).`);
+            }
+
+            /* JUMP QUIRKS:
+               - Label indentation does not matter whatsoever
+               - Jumping to the end of a block acts as INSIDE the block (for else/while detection)
+                   - There must be at least one real, de-indented line for the label to be considered separate
+                   - Using "Infinity" as the indent level after a jump will make it fall into the current highest block
+             */
+
+            let executionLine = this.jumpTo ?? this.lastLine;
+            let currentIndent = this.rtState === LT.SpiderStateEnum.NEW
+                ? 0 // just starting execution
+                : this.text[executionLine]?.indent ?? Infinity;
+            this.jumpTo = undefined;
+            if (this.shouldFollowIndent) {
+                do {
+                    executionLine = (executionLine + 1) % this.text.length;
+                } while (!this.text[executionLine]);
+                if (this.text[executionLine]!.indent <= currentIndent) {
+                    throw new Error("INTERNAL ERROR: Expected indentation increase.");
+                }
+            } else {
+                do {
+                    executionLine = (executionLine + 1) % this.text.length;
+                    const line = this.text[executionLine];
+                    if (line && line.indent < currentIndent) {
+                        if (PT.ASTNode.isNodeElse(line.ast)) {
+                            // we know we passed an if statement earlier: continue iteration (but fall to that indent)
+                            currentIndent = line.indent;
+                            executionLine = (executionLine + 1) % this.text.length; // get past this else statement
+                        } else {
+                            // we need to iterate backwards to figure out what type of block we just dropped
+                            let blockLine = executionLine;
+                            do {
+                                blockLine--;
+                                if (blockLine < 0) {
+                                    blockLine = this.text.length - 1; // the block was the last line of code :/
+                                }
+                            } while (!this.text[blockLine] || this.text[blockLine]!.indent != line.indent);
+                            if (PT.ASTNode.isNodeWhile(this.text[blockLine]!.ast)) {
+                                // need to re-evaluate that while loop, so go back
+                                executionLine = blockLine;
+                                currentIndent = this.text[blockLine]!.indent;
+                            } else {
+                                // if/else - want to fall off the end of the block (where executionLine is right now)
+                                currentIndent = line.indent;
+                            }
+                        }
+                    }
+                } while (!this.text[executionLine] || this.text[executionLine]!.indent > currentIndent);
+            }
+
+            // prepare for next iteration (might as well do it now)
+            this.shouldFollowIndent = false;
+            this.rtState = LT.SpiderStateEnum.RUNNING;
+            this.lastLine = executionLine;
+
+            const line = this.text[executionLine];
+            if (!line) {
+                throw new Error("INTERNAL ERROR: Unexpected undefined line.");
+            }
+
+            if (PT.ASTNode.isNodeAssignment(line.ast)) {
+                const slotLocation = this.getVarslotIndex(line.ast.varslot);
+                const value = this.evalEquation(line.ast.equation);
+                this.tape[slotLocation].value = value;
+            } else if (PT.ASTNode.isNodeFunccall(line.ast)) {
+                this.callFunction(line.ast.func, line.ast.equation);
+            } else if (PT.ASTNode.isNodeObjFunccall(line.ast)) {
+                this.callObjFunction(line.ast.object, line.ast.func, line.ast.equation);
+            } else if (PT.ASTNode.isNodeIf(line.ast) || PT.ASTNode.isNodeWhile(line.ast)) {
+                const eq = this.evalEquation(line.ast.equation);
+                if (eq !== 0) {
+                    this.shouldFollowIndent = true;
+                }
+            } else if (PT.ASTNode.isNodeElse(line.ast)) {
+                // we should not be evaluating the else at all if we're skipping it
+                this.shouldFollowIndent = true;
+            } else if (PT.ASTNode.isNodeJump(line.ast)) {
+                const node = line.ast; // TS doesn't like smart casting into the `find`
+                this.jumpTo = this.labels.find((l) => l.name === node.destination)?.lineNumber;
+            } else {
+                throw new Error(`INTERNAL ERROR: Unrecognized root node type ${typeof line.ast}.`);
+            }
+
+            if (ALLOW_EARLY_FAIL) {
+                // fail them early if they output something incorrect
+                const lastOutI = this.outputs.length - 1;
+                if (lastOutI < this.test.expectedOutput.length && this.test.expectedOutput[lastOutI] != this.outputs[lastOutI]) {
+                    throw new Error(`Incorrect output: ${this.outputs[lastOutI]} (expected ${this.test.expectedOutput[lastOutI]}).`);
+                } else if (lastOutI >= this.test.expectedOutput.length) {
+                    throw new Error(`Incorrect output: ${this.outputs[lastOutI]} (expected no additional output).`);
+                }
+            }
+        } catch (e: unknown) {
+            if (e instanceof Error) {
+                this.haltReason = e.message;
+                if (e instanceof BenignHalt) {
+                    // they did a "normal" halt (i.e. not an error), so let them succeed if they match
+                    if (this.test.expectedOutput.length === this.outputs.length
+                        && this.test.expectedOutput.every((e, i) => e === this.outputs[i])) {
+                        this.rtState = LT.SpiderStateEnum.SUCCESS;
+                    } else {
+                        this.rtState = LT.SpiderStateEnum.FAIL;
+                    }
+                } else {
+                    this.rtState = LT.SpiderStateEnum.ERROR;
+                }
+            } else {
+                this.haltReason = "INTERNAL ERROR: Unknown throwable.";
+                this.rtState = LT.SpiderStateEnum.ERROR;
+            }
+        }
+    }
+
+    getPuzzleDataText(variables: LT.CustomSlot[]): string {
+        let vars: string[]; // no default value: have the linter check that all paths assign
+
+        // I know it sucks.
+
+        if (!this.puzzle.canRenameSlots && !this.puzzle.canEditSlots) {
+            // they aren't allowed to do anything - use the puzzle defaults
+            if (!this.test.slotValues) {
+                // all zeroed - just store names
+                if (this.puzzle.defaultSlotNames) {
+                    vars = this.puzzle.defaultSlotNames.map((n, i) => {
+                        if (!n) {
+                            return undefined; // don't actually have a name
+                        }
+                        return new LT.CustomSlot(i, n).toProgramText()
+                    }).filter((x) => x !== undefined)
+                } else {
+                    // no names either? what, no variables in this puzzle?
+                    vars = [];
+                }
+            } else {
+                // we do have default slot values, so set them up
+                vars = this.test.slotValues.map((v, i) => {
+                    const n = this.puzzle.defaultSlotNames?.[i];
+                    if (v === 0 && !n) {
+                        return undefined; // it's pure default - don't bother adding it in
+                    }
+                    return new LT.CustomSlot(i, n ?? undefined, v).toProgramText()
+                }).filter((s) => s !== undefined)
+            }
+        } else if (!this.puzzle.canRenameSlots) {
+            // they can edit, but not rename - combine the lists
+            if (!this.puzzle.defaultSlotNames) {
+                // we don't have names either? this is weird - but we do have to keep their custom default values
+                vars = variables.map((s) => new LT.CustomSlot(s.slot, undefined, s.value)).map((s) => s.toProgramText());
+            } else {
+                // keep if it has EITHER a defaultSlotNames name or a variables value
+                vars = this.puzzle.defaultSlotNames.map((n, i) => {
+                    const v = variables.find((s) => s.slot === i)?.value;
+                    if ((!v || v === 0) && !n) {
+                        return undefined; // it's pure default - don't bother adding it in
+                    }
+                    return new LT.CustomSlot(i, n ?? undefined, v).toProgramText();
+                }).filter((x) => x !== undefined);
+            }
+        } else if (!this.puzzle.canEditSlots) {
+            // they can rename, but not edit - combine the lists
+            if (!this.test.slotValues) {
+                // all-zero defaults, so just keep their names (preferring the user-entered one)
+                if (this.puzzle.defaultSlotNames) {
+                    vars = this.puzzle.defaultSlotNames.map((nd, i) => {
+                        const s = variables.find((s) => s.slot === i);
+                        if (!s && !nd) {
+                            return undefined;
+                        }
+                        return new LT.CustomSlot(i, s?.name ?? nd ?? undefined).toProgramText();
+                    }).filter((x) => x !== undefined);
+                } else {
+                    vars = variables.map((s) => new LT.CustomSlot(s.slot, s.name).toProgramText());
+                }
+            } else {
+                // need to combine the slot values with their choices
+                vars = this.test.slotValues.map((v, i) => {
+                    const n = variables.find((s) => s.slot === i)?.name;
+                    const nd = this.puzzle.defaultSlotNames?.[i];
+                    if (v === 0 && !n && !nd) {
+                        return undefined; // it's pure default - don't bother adding it in
+                    }
+                    return new LT.CustomSlot(i, n ?? nd ?? undefined, v).toProgramText();
+                }).filter((x) => x !== undefined);
+            }
+        } else {
+            // they have complete control - figure out what they want to use, but might still have default/backup names
+            if (this.puzzle.defaultSlotNames) {
+                vars = this.puzzle.defaultSlotNames.map((nd, i) => {
+                    const s = variables.find((s) => s.slot === i);
+                    if (!s && !nd) {
+                        return undefined;
+                    }
+                    return new LT.CustomSlot(i, s?.name ?? nd ?? undefined, s?.value).toProgramText();
+                }).filter((x) => x !== undefined);
+            } else {
+                vars = variables.map((v) => v.toProgramText());
+            }
+        }
+
+        const objs = this.test.objects.map((o) => o.toProgramText());
+
+        return `${objs.join("\n")}\n${vars.join("\n")}`;
+    }
+
+    getVarslotIndex(varslot: PT.ASTVarslot): number {
+        const root = this.tape.findIndex((s) => s.name === varslot.identifier);
+        const offset = varslot.offset ? this.evalEquation(varslot.offset) : 0;
+        const index = root + offset;
+        if (index < 0 || index >= this.tape.length) {
+            throw new Error(`Slot ${index} (${varslot.identifier}[${offset}]) out of bounds.`);
+        }
+        return index;
+    }
+
+    evalEquation(node: PT.ASTNode): number {
+        if (PT.ASTNode.isNodeEquation(node)) {
+            // note: never evaluate a side more than once, as they may have side effects
+            const left = this.evalEquation(node.eq.left);
+            if (node.eq.unary) {
+                switch (node.eq.operator) {
+                    case "-":
+                        return -1 * left;
+                    case "!":
+                        return left === 0 ? 1 : 0;
+                }
+            } else {
+                // note: don't pre-evaluate `right` because of possible short circuit
+                switch (node.eq.operator) {
+                    case "+":
+                        return this.wrapNumber(left + this.evalEquation(node.eq.right));
+                    case "-":
+                        return this.wrapNumber(left - this.evalEquation(node.eq.right));
+                    case "*":
+                        return this.wrapNumber(left * this.evalEquation(node.eq.right));
+                    case "/": {
+                        const right = this.evalEquation(node.eq.right);
+                        if (right === 0) {
+                            throw new Error("Division by zero.");
+                        }
+                        return this.wrapNumber(Math.floor(left / this.evalEquation(node.eq.right)));
+                    }
+                    case "%": {
+                        const right = this.evalEquation(node.eq.right);
+                        if (right === 0) {
+                            throw new Error("Modulus by zero.");
+                        }
+                        return this.wrapNumber(left % this.evalEquation(node.eq.right));
+                    }
+                    case ">":
+                        return left > this.evalEquation(node.eq.right) ? 1 : 0;
+                    case ">=":
+                        return left >= this.evalEquation(node.eq.right) ? 1 : 0;
+                    case "==":
+                        return left == this.evalEquation(node.eq.right) ? 1 : 0;
+                    case "!=":
+                        return left != this.evalEquation(node.eq.right) ? 1 : 0;
+                    case "<=":
+                        return left <= this.evalEquation(node.eq.right) ? 1 : 0;
+                    case "<":
+                        return left < this.evalEquation(node.eq.right) ? 1 : 0;
+                    case "&&": {
+                        if (left === 0) {
+                            return 0;
+                        }
+                        return this.evalEquation(node.eq.right) === 0 ? 0 : 1;
+                    }
+                    case "||": {
+                        if (left !== 0) {
+                            return 1;
+                        }
+                        return this.evalEquation(node.eq.right) === 0 ? 0 : 1;
+                    }
+                }
+            }
+            throw new Error(`INTERNAL ERROR: Unrecognized operator ${node.eq.operator} (unary=${node.eq.unary}).`);
+        } else if (PT.ASTNode.isNodeNumber(node)) {
+            return node.value;
+        } else if (PT.ASTNode.isNodeVarslot(node)) {
+            return this.tape[this.getVarslotIndex(node)].value;
+        } else if (PT.ASTNode.isNodeFunccall(node)) {
+            return this.callFunction(node.func, node.equation);
+        } else if (PT.ASTNode.isNodeObjFunccall(node)) {
+            return this.callObjFunction(node.func, node.object, node.equation);
+        } else {
+            throw new Error(`INTERNAL ERROR: Unrecognized equation node type ${typeof node}.`);
+        }
+    }
+
+    wrapNumber(value: number): number {
+        while (value > 999) {
+            value -= 1999;
+        }
+        while (value < -999) {
+            value += 1999;
+        }
+        return value;
+    }
+
+    callFunction(funcname: string, arg: PT.ASTNode | undefined): number {
+        if (arg) {
+            if (funcname === "output") {
+                this.outputs.push(this.evalEquation(arg));
+                return 0;
+            }
+        } else {
+            if (funcname === "input") {
+                const v = this.inputs.shift();
+                if (!v) {
+                    throw new BenignHalt("No inputs remaining.");
+                }
+                return v;
+            } else if (funcname === "end") {
+                throw new BenignHalt("Halted normally.");
+            }
+        }
+        throw new Error(`INTERNAL ERROR: Unknown function ${funcname}.`);
+    }
+
+    callObjFunction(funcname: string, objname: string, arg: PT.ASTNode | undefined): number {
+        const obj = this.objs.find((o) => o.name === objname);
+        if (!obj) {
+            throw new Error(`INTERNAL ERROR: Unknown object ${objname}.`)
+        }
+        if (arg) {
+            const argVal = this.evalEquation(arg);
+            if (obj.type === "stack" && funcname === "push") {
+                obj.contents.push(argVal);
+                return 0;
+            } else if (obj.type === "queue" && funcname === "enqueue") {
+                obj.contents.push(argVal);
+                return 0;
+            }
+        } else {
+            if (obj.type === "cmd" && funcname === "next") {
+                const v = obj.contents.shift();
+                if (!v) {
+                    throw new BenignHalt(`No next in ${obj.name}.`);
+                }
+                return v;
+            } else if (obj.type === "stack") {
+                if (funcname === "pop") {
+                    const v = obj.contents.pop();
+                    if (!v) {
+                        throw new Error(`${obj.name} is empty.`);
+                    }
+                    return v;
+                } else if (funcname === "length") {
+                    return obj.contents.length;
+                }
+            } else if (obj.type === "queue") {
+                if (funcname === "dequeue") {
+                    const v = obj.contents.shift();
+                    if (!v) {
+                        throw new Error(`${obj.name} is empty.`);
+                    }
+                    return v;
+                } else if (funcname === "length") {
+                    return obj.contents.length;
+                }
+            }
+        }
+        throw new Error(`INTERNAL ERROR: Unknown object function ${objname}.${funcname}.`);
+    }
+}
