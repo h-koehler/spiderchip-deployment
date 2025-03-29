@@ -12,26 +12,26 @@ const RE_BRACKET_OPEN = /\[/;
 const RE_BRACKET_CLOSE = /\]/;
 const RE_PAREN_OPEN = /\(/;
 const RE_PAREN_CLOSE = /\)/;
-const RE_OPERATOR = /(>|>=|==|<=|<|&&|\|\||[*/%+-])/;
-const RE_UNARY_OPERATOR = /(-(?!\d)|!)/;
+const RE_OPERATOR = /(>|>=|==|!=|<=|<|&&|\|\||[*/%+-])/;
+const RE_UNARY_OPERATOR = /(-(?!\d)|!(?!=))/;
 const RE_NUMBER = /-?\d{1,3}/;
 const RE_IDENTIFIER = /[A-Za-z_][A-Za-z0-9_]*/;
 
 // ordered based on the binding strength from weakest to strongest
-const OPERATOR_BINDING_GROUPS = [["||"], ["&&"], [">", ">=", "==", "<=", "<"], ["+", "-"], ["*", "/", "%"]];
+const OPERATOR_BINDING_GROUPS = [["||"], ["&&"], [">", ">=", "==", "!=", "<=", "<"], ["+", "-"], ["*", "/", "%"]];
 
-const ObjectType = Object.freeze({
+const ObjectType = {
     CMD: "cmd",
     STACK: "stack",
     QUEUE: "queue"
-});
+};
 
 // function entries are name: argcount
-const SUPPORTED_OBJS = Object.freeze({
+const SUPPORTED_OBJS = {
     [ObjectType.CMD]: { next: 0 },
     [ObjectType.STACK]: { push: 1, pop: 0, length: 0 },
     [ObjectType.QUEUE]: { enqueue: 1, dequeue: 0, length: 0 }
-});
+};
 const SUPPORTED_FUNCS = { input: 0, output: 1, end: 0 };
 const RESERVED_KEYWORDS = ["if", "else", "while", "jump"];
 
@@ -619,6 +619,8 @@ function parseEquationAtomize(until: RegExp, parse: LineParse, result: PT.ParseR
         // optional unary operator
         // if we see this, we'll create a sub equation just for that argument to include the unary op
         // we disallow - followed by a number, so -999 is -999 not -1 * 999 (though that means - -999 is valid...)
+        // TODO: stacking unary operators is not yet supported, so something like !!x is impossible
+        //       it should be done using a chain of unary equation nodes, so no runtime changes necessary
         let unary: string | undefined = undefined;
         if (parse.match(RE_UNARY_OPERATOR)) {
             unary = parse.matched;
