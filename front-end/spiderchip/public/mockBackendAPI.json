@@ -5,7 +5,7 @@
   "canRenameSlots": false,
   "testCases": [
     {
-      "slotValues": [0, 0, 0],
+      "slotValues": [null, null, null],
       "inputQueue": [5, 3],
       "expectedOutput": [8],
       "objects": [
