@@ -6,17 +6,23 @@ import PuzzleDetails from "../components/PuzzleDetails.tsx";
 import "./PuzzleUI.css"
 import { useEffect, useState } from "react";
 import PuzzlePauseMenu from "../components/PuzzlePauseMenu.tsx";
-// import api from "../services/api.ts";
-import { initializeRuntime, stepCode } from "../services/runtimeManager.ts";
+import {
+    initializeRuntime,
+    initializeSpiderRuntime,
+    stepCode
+} from "../services/runtimeManager.ts";
+import { 
+    Puzzle,
+    PuzzleTest,
+    SpiderObject,
+    CustomSlot,
+} from "../language-system/ls-interface-types.ts";
 
 export default function PuzzleUI(props: { level: LevelItem }) {
     const [menuIsOpen, setMenuIsOpen] = useState(false);
     const [code, setCode] = useState<string>("");4
     const [parserOutput, setParserOutput] = useState<string>("");
-
-    // useEffect(() => {
-    //     initializeSpiderRuntime();
-    // }, []);
+    const [initialVars, setInitialVars] = useState<CustomSlot[]>([]);
 
     useEffect(() => {
         const handleEscKey = (event: KeyboardEvent) => {
@@ -30,24 +36,47 @@ export default function PuzzleUI(props: { level: LevelItem }) {
     }, []);
 
     useEffect(() => {
-        const fetchInitialValue = async () => {
-            try {
-                // Mock API response
-                const mockResponse = {
-                    initialValue: `SPDR PROGRAM\n.data\ntapelength 3\n0 0\n1 0\nstack mystack\n.text\nstart:\nmystack.push(10)`
-                };
-                
-                // Uncomment this when backend is ready
-                // const response = await api.get(`/levels/${props.level.id}`);
-                
-                setCode(mockResponse.initialValue);
-            } catch (error) {
-                console.error("Failed to fetch initial value:", error);
-            }
+        const fetchPuzzleData = async () => {
+          try {
+            // MOCK FETCH - using static JSON file for now
+            const res = await fetch("/mockBackendAPI.json");
+            const data = await res.json();
+    
+            // REAL BACKEND FETCH (uncomment when ready)
+            // const res = await axios.get(`/api/levels/${props.level.id}/testcase`);
+            // const data = res.data;
+    
+            const puzzle = new Puzzle(
+              data.slotCount,
+              data.testCases.map(
+                (tc: any) =>
+                  new PuzzleTest(
+                    tc.objects.map(
+                      (o: any) => new SpiderObject(o.type, o.name, o.contents)
+                    ),
+                    tc.slotValues,
+                    tc.inputQueue,
+                    tc.expectedOutput
+                  )
+              ),
+              data.defaultSlotNames,
+              data.canEditSlots,
+              data.canRenameSlots
+            );
+    
+            const vars = puzzle.defaultSlotNames?.map(
+              (name, i) => new CustomSlot(i, name ?? undefined, 0)
+            ) ?? [];
+    
+            setInitialVars(vars);
+            initializeSpiderRuntime(puzzle);
+          } catch (err) {
+            console.error("Failed to fetch puzzle data:", err);
+          }
         };
-
-        fetchInitialValue();
-    }, [props.level.id]);
+    
+        fetchPuzzleData();
+      }, [props.level.id]);
 
     // TODO: Implement saving as player makes changes
     // TODO: Fix issue where "skipped" status on LevelSelect isn't saved when returning to page
@@ -56,7 +85,7 @@ export default function PuzzleUI(props: { level: LevelItem }) {
         <div className="puzzle-layout">
             <div className="input-container">
                 <PuzzleInput initialValue={code} onChange={setCode}/>
-                <button className="button button-format" onClick={() => initializeRuntime(code, setParserOutput)}>Run Code</button>
+                <button className="button button-format" onClick={() => initializeRuntime(code, setParserOutput, initialVars)}>Run Code</button>
                 <button className="button button-format" onClick={() => stepCode(setParserOutput)}>Step</button>
             </div>
             <div className="visualization-container">
