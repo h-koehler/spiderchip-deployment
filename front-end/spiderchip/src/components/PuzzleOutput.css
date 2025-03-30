@@ -1,0 +1,19 @@
+.output-header {
+    background: #800000;
+    padding: .5em;
+}
+
+.output-header > img {
+    width: 2em;
+}
+
+.output-content {
+    padding: 0.5em;
+    height: 150px;
+    background-color: white;
+    color: black;
+    font-family: 'Courier New', monospace;
+    font-size: 1.1em;
+    flex-grow: 1;
+    overflow-y: auto;
+}

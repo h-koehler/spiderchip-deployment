@@ -1,0 +1,61 @@
+.puzzle-layout {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    grid-template-rows: repeat(5, 1fr);
+    height: 100vh;
+}
+
+.input-container {
+    grid-column: 1 / 4;
+    grid-row: 1 / 4;
+    padding: .75em;
+    border-top: .2em solid white;
+    border-left: .2em solid white;
+    border-right: .2em solid black;
+    border-bottom: .2em solid black;
+    background: #E0E0E0;
+}
+
+.visualization-container {
+    grid-column: 4 / 8;
+    grid-row: 1 / 5;
+    padding: .75em;
+    border-top: .2em solid white;
+    border-left: .2em solid white;
+    border-right: .2em solid black;
+    border-bottom: .2em solid black;
+    background: #E0E0E0;
+}
+
+.output-container {
+    grid-column: 1 / 4;
+    grid-row: 4 / 5;
+    padding: .75em;
+    border-top: .2em solid white;
+    border-left: .2em solid white;
+    border-right: .2em solid black;
+    border-bottom: .2em solid black;
+    background: #E0E0E0;
+}
+
+.details-container {
+    grid-column: 1 / 8;
+    grid-row: 5 / 6;
+    padding: .75em;
+    border-top: .2em solid white;
+    border-left: .2em solid white;
+    border-right: .2em solid black;
+    border-bottom: .2em solid black;
+    background: #E0E0E0;
+}
+
+.header {
+    background: #800000;
+    height: 1.5em;
+    padding: .5em;
+}
+
+.header > img {
+    max-width: 100%;
+    max-height: 100%;
+}

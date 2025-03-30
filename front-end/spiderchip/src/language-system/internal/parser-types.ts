@@ -218,9 +218,10 @@ export class ASTIf extends ASTNode {
 }
 
 export class ASTElse extends ASTNode {
+    iAmElse: boolean = true; // otherwise we're indistinguishable from the source
+
     constructor() {
         super();
-        // we don't need any data - our class alone is the indicator
     }
 }
 
