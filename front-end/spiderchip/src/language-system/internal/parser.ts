@@ -1,4 +1,5 @@
 import * as PT from "./parser-types";
+
 export default parse;
 
 const RE_EOL = /$/;
@@ -12,13 +13,13 @@ const RE_BRACKET_OPEN = /\[/;
 const RE_BRACKET_CLOSE = /\]/;
 const RE_PAREN_OPEN = /\(/;
 const RE_PAREN_CLOSE = /\)/;
-const RE_OPERATOR = /(>|>=|==|!=|<=|<|&&|\|\||[*/%+-])/;
+const RE_OPERATOR = /(>(?!=)|>=|==|!=|<=|<(?!=)|&&|\|\||[*/%+-])/;
 const RE_UNARY_OPERATOR = /(-(?!\d)|!(?!=))/;
 const RE_NUMBER = /-?\d{1,3}/;
 const RE_IDENTIFIER = /[A-Za-z_][A-Za-z0-9_]*/;
 
 // ordered based on the binding strength from weakest to strongest
-const OPERATOR_BINDING_GROUPS = [["||"], ["&&"], [">", ">=", "==", "!=", "<=", "<"], ["+", "-"], ["*", "/", "%"]];
+const OPERATOR_BINDING_GROUPS = [["||"], ["&&"], [">=", ">", "==", "!=", "<=", "<"], ["+", "-"], ["*", "/", "%"]];
 
 const ObjectType = {
     CMD: "cmd",
@@ -619,11 +620,10 @@ function parseEquationAtomize(until: RegExp, parse: LineParse, result: PT.ParseR
         // optional unary operator
         // if we see this, we'll create a sub equation just for that argument to include the unary op
         // we disallow - followed by a number, so -999 is -999 not -1 * 999 (though that means - -999 is valid...)
-        // TODO: stacking unary operators is not yet supported, so something like !!x is impossible
-        //       it should be done using a chain of unary equation nodes, so no runtime changes necessary
-        let unary: string | undefined = undefined;
-        if (parse.match(RE_UNARY_OPERATOR)) {
-            unary = parse.matched;
+        const unary: string[] = [];
+        while (parse.match(RE_UNARY_OPERATOR)) {
+            unary.push(parse.matched);
+            parse.match(RE_WS_OPT);
         }
 
         parse.match(RE_WS_OPT);
@@ -655,10 +655,15 @@ function parseEquationAtomize(until: RegExp, parse: LineParse, result: PT.ParseR
             throw new Error(`Expected equation argument at position '${parse.pos}'.`);
         }
 
-        // now add our argument, optionally with its unary operator
-        if (unary) {
-            args.push(new PT.ASTEquation(argument, null, unary));
+        if (unary.length > 0) {
+            // have some unaries, so split them into sub-equations
+            let subNode = argument;
+            do {
+                subNode = new PT.ASTEquation(subNode, null, unary.pop()!);
+            } while (unary.length > 0);
+            args.push(subNode);
         } else {
+            // just add the argument
             args.push(argument);
         }
 

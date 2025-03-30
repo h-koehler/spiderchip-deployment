@@ -57,8 +57,8 @@ export interface SpiderRuntime {
      * It is a good idea to debounce code changes rather than spamming init for each keypress.
      * Do not randomly change the caseNum per init, instead keep using one until solved or dubious.
      *
-     * When initializing a puzzle, create this runtime, IMMEDIATELY call `init`, then `state`.
-     * This gives the setup for what the puzzle looks like.
+     * When initializing a puzzle, create the runtime and IMMEDIATELY call this `init` function.
+     * This will initialize the full runtime and allow usage of the other functions.
      */
     init(text: string, variables: CustomSlot[], caseNum: number): undefined;
 
