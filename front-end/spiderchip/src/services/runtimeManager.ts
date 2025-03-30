@@ -80,11 +80,11 @@ import {
     }
   
     state.varslots.forEach((slot, i) => {
-      outputMessage += `\n> Tape Slot ${i}: ${slot.value} (${slot.name})`;
+      outputMessage += `\nTape Slot ${i}: ${slot.value} (${slot.name})`;
     });
   
     state.objs.forEach((obj) => {
-      outputMessage += `\n> ${obj.type} '${obj.name}' Contents: ${obj.contents.join(", ")}`;
+      outputMessage += `\n${obj.type} '${obj.name}' Contents: ${obj.contents.join(", ")}`;
     });
   
     setParserOutput(outputMessage.trim());
