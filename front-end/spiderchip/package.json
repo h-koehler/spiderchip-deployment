@@ -11,7 +11,10 @@
     "test": "echo 'Running frontend tests... ✅'"
   },
   "dependencies": {
+    "@monaco-editor/react": "^4.4.6",
     "axios": "^1.8.1",
+    "monaco-editor": "^0.34.1",
+    "monaco-jsx-highlighter": "^2.0.4",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-modal": "^3.16.3",
