@@ -249,7 +249,7 @@ class ExecutionEngine {
             } else if (PT.ASTNode.isNodeFunccall(line.ast)) {
                 this.callFunction(line.ast.func, line.ast.equation);
             } else if (PT.ASTNode.isNodeObjFunccall(line.ast)) {
-                this.callObjFunction(line.ast.object, line.ast.func, line.ast.equation);
+                this.callObjFunction(line.ast.func, line.ast.object, line.ast.equation);
             } else if (PT.ASTNode.isNodeIf(line.ast) || PT.ASTNode.isNodeWhile(line.ast)) {
                 const eq = this.evalEquation(line.ast.equation);
                 if (eq !== 0) {
