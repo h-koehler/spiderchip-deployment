@@ -26,7 +26,7 @@ export class ExecutionEngine {
     haltReason: string | undefined = undefined; // reason why the runtime halted, e.g. "Division by zero."
 
     iters: number = 0;
-    lastLine: number = 0;
+    currentLine: number = 0;
     tape: LT.SpiderSlot[];
     objs: LT.SpiderObject[];
 
@@ -77,7 +77,7 @@ export class ExecutionEngine {
         const retObjs = this.objs.map((o) => new LT.SpiderObject(o.type, o.name, o.contents.slice()));
         const retInps = this.inputs.slice();
         const retOuts = this.outputs.slice();
-        return new LT.SpiderState(this.rtState, retTape, retObjs, retInps, retOuts, this.lastLine, this.haltReason);
+        return new LT.SpiderState(this.rtState, retTape, retObjs, retInps, retOuts, this.currentLine, this.haltReason);
     }
 
     stateSimple(): LT.SpiderStateEnum {
@@ -94,104 +94,11 @@ export class ExecutionEngine {
             return;
         }
 
+        this.rtState = LT.SpiderStateEnum.RUNNING;
+
         try {
-            this.iters++;
-            if (this.iters > MAX_ITERATIONS) {
-                throw new Error(`Exceeded maximum iterations (${MAX_ITERATIONS}).`);
-            }
-
-            /* JUMP QUIRKS:
-               - Label indentation does not matter whatsoever
-               - Jumping to the end of a block acts as INSIDE the block (for else/while detection)
-                   - There must be at least one real, de-indented line for the label to be considered separate
-                   - Using "Infinity" as the indent level after a jump will make it fall into the current highest block
-             */
-
-            let executionLine = this.jumpTo ?? this.lastLine;
-            let currentIndent = this.rtState === LT.SpiderStateEnum.NEW
-                ? 0 // just starting execution
-                : this.text[executionLine]?.indent ?? Infinity;
-            this.jumpTo = undefined;
-            if (this.shouldFollowIndent) {
-                do {
-                    executionLine = (executionLine + 1) % this.text.length;
-                } while (!this.text[executionLine]);
-                if (this.text[executionLine]!.indent <= currentIndent) {
-                    throw new Error("INTERNAL ERROR: Expected indentation increase.");
-                }
-            } else {
-                do {
-                    executionLine = (executionLine + 1) % this.text.length;
-                    const line = this.text[executionLine];
-                    if (line && line.indent < currentIndent) {
-                        if (PT.ASTNode.isNodeElse(line.ast)) {
-                            // we know we passed an if statement earlier: continue iteration (but fall to that indent)
-                            currentIndent = line.indent;
-                            executionLine = (executionLine + 1) % this.text.length; // get past this else statement
-                        } else {
-                            // we need to iterate backwards to figure out what type of block we just dropped
-                            let blockLine = executionLine;
-                            do {
-                                blockLine--;
-                                if (blockLine < 0) {
-                                    blockLine = this.text.length - 1; // the block was the last line of code :/
-                                }
-                            } while (!this.text[blockLine] || this.text[blockLine]!.indent != line.indent);
-                            if (PT.ASTNode.isNodeWhile(this.text[blockLine]!.ast)) {
-                                // need to re-evaluate that while loop, so go back
-                                executionLine = blockLine;
-                                currentIndent = this.text[blockLine]!.indent;
-                            } else {
-                                // if/else - want to fall off the end of the block (where executionLine is right now)
-                                currentIndent = line.indent;
-                            }
-                        }
-                    }
-                } while (!this.text[executionLine] || this.text[executionLine]!.indent > currentIndent);
-            }
-
-            // prepare for next iteration (might as well do it now)
-            this.shouldFollowIndent = false;
-            this.rtState = LT.SpiderStateEnum.RUNNING;
-            this.lastLine = executionLine;
-
-            const line = this.text[executionLine];
-            if (!line) {
-                throw new Error("INTERNAL ERROR: Unexpected undefined line.");
-            }
-
-            if (PT.ASTNode.isNodeAssignment(line.ast)) {
-                const slotLocation = this.getVarslotIndex(line.ast.varslot);
-                const value = this.evalEquation(line.ast.equation);
-                this.tape[slotLocation].value = value;
-            } else if (PT.ASTNode.isNodeFunccall(line.ast)) {
-                this.callFunction(line.ast.func, line.ast.equation);
-            } else if (PT.ASTNode.isNodeObjFunccall(line.ast)) {
-                this.callObjFunction(line.ast.object, line.ast.func, line.ast.equation);
-            } else if (PT.ASTNode.isNodeIf(line.ast) || PT.ASTNode.isNodeWhile(line.ast)) {
-                const eq = this.evalEquation(line.ast.equation);
-                if (eq !== 0) {
-                    this.shouldFollowIndent = true;
-                }
-            } else if (PT.ASTNode.isNodeElse(line.ast)) {
-                // we should not be evaluating the else at all if we're skipping it
-                this.shouldFollowIndent = true;
-            } else if (PT.ASTNode.isNodeJump(line.ast)) {
-                const node = line.ast; // TS doesn't like smart casting into the `find`
-                this.jumpTo = this.labels.find((l) => l.name === node.destination)?.lineNumber;
-            } else {
-                throw new Error(`INTERNAL ERROR: Unrecognized root node type ${typeof line.ast}.`);
-            }
-
-            if (ALLOW_EARLY_FAIL) {
-                // fail them early if they output something incorrect
-                const lastOutI = this.outputs.length - 1;
-                if (lastOutI < this.test.expectedOutput.length && this.test.expectedOutput[lastOutI] != this.outputs[lastOutI]) {
-                    throw new Error(`Incorrect output: ${this.outputs[lastOutI]} (expected ${this.test.expectedOutput[lastOutI]}).`);
-                } else if (lastOutI >= this.test.expectedOutput.length) {
-                    throw new Error(`Incorrect output: ${this.outputs[lastOutI]} (expected no additional output).`);
-                }
-            }
+            this.continueToNextLine();
+            this.executeCurrentLine();
         } catch (e: unknown) {
             if (e instanceof Error) {
                 this.haltReason = e.message;
@@ -209,6 +116,114 @@ export class ExecutionEngine {
             } else {
                 this.haltReason = "INTERNAL ERROR: Unknown throwable.";
                 this.rtState = LT.SpiderStateEnum.ERROR;
+            }
+        }
+    }
+
+    continueToNextLine() {
+        /* JUMP QUIRKS:
+           - Label indentation does not matter whatsoever
+           - The line to execute is always whatever immediately follows a jump
+         */
+
+        let executionLine = this.jumpTo ?? this.currentLine;
+        let searchIndent = this.rtState === LT.SpiderStateEnum.NEW
+            ? 0 // just starting execution
+            : this.text[executionLine]?.indent ?? 0;
+
+        if (this.jumpTo || this.shouldFollowIndent) {
+            // take whatever the next available line is
+            do {
+                executionLine = (executionLine + 1) % this.text.length;
+            } while (!this.text[executionLine]);
+            if (!this.jumpTo && this.text[executionLine]!.indent <= searchIndent) {
+                throw new Error("INTERNAL ERROR: Expected indentation increase.");
+            }
+        } else {
+            do {
+                executionLine = (executionLine + 1) % this.text.length;
+                const line = this.text[executionLine];
+                if (line && line.indent < searchIndent) {
+                    // need to be careful here - if we fell more than one indent level, need to check ALL of them for while's
+                    searchIndent--;
+                    do {
+                        if (searchIndent == line.indent && PT.ASTNode.isNodeElse(line.ast)) {
+                            // if we see this, we know we passed an if statement earlier so we can fall here
+                            // ...but only if we know there are no while loops above our search level!
+                            executionLine = (executionLine + 1) % this.text.length; // get past this else statement
+                            searchIndent = line.indent;
+                        } else {
+                            // we need to iterate backwards to figure out what type of block we just dropped
+                            let blockLine = executionLine;
+                            do {
+                                blockLine--;
+                                if (blockLine < 0) {
+                                    blockLine = this.text.length - 1; // the block was the last line of code :/
+                                }
+                            } while (!this.text[blockLine] || this.text[blockLine]!.indent != searchIndent);
+                            if (PT.ASTNode.isNodeWhile(this.text[blockLine]!.ast)) {
+                                // need to re-evaluate that while loop, so go back
+                                executionLine = blockLine;
+                                break;
+                            } else {
+                                // if/else - just decrement off of it and keep on checking the levels
+                                searchIndent--;
+                            }
+                        }
+                    } while (searchIndent > line.indent);
+                }
+            } while (!this.text[executionLine] || this.text[executionLine]!.indent > searchIndent);
+        }
+
+        // commit our new current line
+        this.currentLine = executionLine;
+
+        // prepare for next iteration
+        this.shouldFollowIndent = false;
+        this.jumpTo = undefined;
+    }
+
+    executeCurrentLine() {
+        this.iters++;
+        if (this.iters > MAX_ITERATIONS) {
+            throw new Error(`Exceeded maximum iterations (${MAX_ITERATIONS}).`);
+        }
+
+        const line = this.text[this.currentLine];
+        if (!line) {
+            throw new Error("INTERNAL ERROR: Unexpected undefined line.");
+        }
+
+        if (PT.ASTNode.isNodeAssignment(line.ast)) {
+            const slotLocation = this.getVarslotIndex(line.ast.varslot);
+            const value = this.evalEquation(line.ast.equation);
+            this.tape[slotLocation].value = value;
+        } else if (PT.ASTNode.isNodeFunccall(line.ast)) {
+            this.callFunction(line.ast.func, line.ast.equation);
+        } else if (PT.ASTNode.isNodeObjFunccall(line.ast)) {
+            this.callObjFunction(line.ast.func, line.ast.object, line.ast.equation);
+        } else if (PT.ASTNode.isNodeIf(line.ast) || PT.ASTNode.isNodeWhile(line.ast)) {
+            const eq = this.evalEquation(line.ast.equation);
+            if (eq !== 0) {
+                this.shouldFollowIndent = true;
+            }
+        } else if (PT.ASTNode.isNodeElse(line.ast)) {
+            // we should not be evaluating the else at all if we're skipping it
+            this.shouldFollowIndent = true;
+        } else if (PT.ASTNode.isNodeJump(line.ast)) {
+            const node = line.ast; // TS doesn't like smart casting into the `find`
+            this.jumpTo = this.labels.find((l) => l.name === node.destination)?.lineNumber;
+        } else {
+            throw new Error(`INTERNAL ERROR: Unrecognized root node type ${typeof line.ast}.`);
+        }
+
+        if (ALLOW_EARLY_FAIL) {
+            // fail them early if they output something incorrect
+            const lastOutI = this.outputs.length - 1;
+            if (lastOutI < this.test.expectedOutput.length && this.test.expectedOutput[lastOutI] != this.outputs[lastOutI]) {
+                throw new Error(`Incorrect output: ${this.outputs[lastOutI]} (expected ${this.test.expectedOutput[lastOutI]}).`);
+            } else if (lastOutI >= this.test.expectedOutput.length) {
+                throw new Error(`Incorrect output: ${this.outputs[lastOutI]} (expected no additional output).`);
             }
         }
     }
