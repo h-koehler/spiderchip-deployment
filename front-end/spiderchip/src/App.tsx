@@ -1,10 +1,10 @@
-import {BrowserRouter as Router, Routes, Route, Navigate} from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import Home from './pages/Home';
 import Game from './pages/Game';
 import LevelSelection from "./pages/LevelSelection.tsx";
 import PuzzleUI from "./pages/PuzzleUI.tsx";
-import {LevelItem} from "./types.ts";
-import {useState} from "react";
+import { LevelItem } from "./types.ts";
+import { useState } from "react";
 
 const isAuthenticated = () => {
     return !!localStorage.getItem("token");

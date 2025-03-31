@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import styles from "../assets/css/AuthModal.module.css";
+import styles from "./AuthModal.css";
 import api, { setAuthToken } from "../services/api";
 
 interface AuthModalProps {
@@ -83,18 +83,18 @@ const AuthModalComponent: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
         <div className={styles.modalContent}>
           {isRegister && (
             <>
-              <label className={styles.label}>First Name</label>
-              <input type="text" name="firstName" className={styles.input} onChange={handleChange} />
-              <label className={styles.label}>Last Name</label>
-              <input type="text" name="lastName" className={styles.input} onChange={handleChange} />
+              <label htmlFor="firstName" className={styles.label}>First Name</label>
+              <input id="firstName" type="text" name="firstName" className={styles.input} onChange={handleChange} />
+              <label htmlFor="lastName" className={styles.label}>Last Name</label>
+              <input id="lastName" type="text" name="lastName" className={styles.input} onChange={handleChange} />
             </>
           )}
 
-          <label className={styles.label}>Email</label>
-          <input type="email" name="email" className={styles.input} onChange={handleChange} />
+          <label htmlFor="email" className={styles.label}>Email</label>
+          <input id="email" type="email" name="email" className={styles.input} onChange={handleChange} />
 
-          <label className={styles.label}>Password</label>
-          <input type="password" name="password" className={styles.input} onChange={handleChange} />
+          <label htmlFor="password" className={styles.label}>Password</label>
+          <input id="password" type="password" name="password" className={styles.input} onChange={handleChange} />
 
           {error && <p className={styles.error}>{error}</p>}
 
