@@ -35,6 +35,8 @@
   .titleText {
     flex-grow: 1;
     text-align: center;
+    margin: 0;
+    font-size: larger;
   }
   
   .windowIcon {
@@ -71,6 +73,7 @@
     background: white;
     font-family: inherit;
     font-size: 0.9rem;
+    margin-bottom: 10px;
   }
   
   /* ✅ Error Message positioned below password input */
@@ -78,8 +81,7 @@
     color: red;
     font-size: 0.9rem;
     text-align: center;
-    margin-top: 5px;
-    margin-bottom: 10px; /* Space before the login button */
+    margin-top: 5px 0 10px;
   }
   
   /* Login/Register Button */
@@ -102,11 +104,13 @@
   /* Create Account Link */
   .createAccount {
     display: block;
+    width: 100%;
     text-align: center;
     font-size: 0.8rem;
     margin-top: 10px;
     text-decoration: none;
     color: black;
     cursor: pointer;
+    padding: 5px;
   }
   
