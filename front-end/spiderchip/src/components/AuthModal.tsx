@@ -90,8 +90,8 @@ const AuthModalComponent: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
         <main className="modalContent">
           {isRegister && (
             <>
-              <label className="label">Username</label>
-              <input type="text" name="username" className="input" onChange={handleChange} />
+              <label htmlFor="username" className="label">Username</label>
+              <input id="username" type="text" name="username" className="input" onChange={handleChange} />
             </>
           )}
 
