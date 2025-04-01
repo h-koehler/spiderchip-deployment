@@ -14,8 +14,7 @@ interface AuthModalProps {
 const AuthModalComponent: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
   const [isRegister, setIsRegister] = useState(false); // Toggle between login & register
   const [formData, setFormData] = useState({
-    firstName: "",
-    lastName: "",
+    username: "",
     email: "",
     password: "",
   });
@@ -34,8 +33,7 @@ const AuthModalComponent: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
       let response;
       if (isRegister) {
         response = await api.post("/auth/register", {
-          first_name: formData.firstName,
-          last_name: formData.lastName,
+          username: formData.username,
           email: formData.email,
           password: formData.password,
         });
@@ -92,23 +90,8 @@ const AuthModalComponent: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
         <main className="modalContent">
           {isRegister && (
             <>
-              <label htmlFor="firstName" className="label">First Name</label>
-              <input 
-                id="firstName" 
-                type="text" 
-                name="firstName" 
-                className="input" 
-                onChange={handleChange}
-                autoFocus
-              />
-              <label htmlFor="lastName" className="label">Last Name</label>
-              <input 
-                id="lastName" 
-                type="text" 
-                name="lastName" 
-                className="input" 
-                onChange={handleChange}
-              />
+              <label className="label">Username</label>
+              <input type="text" name="username" className="input" onChange={handleChange} />
             </>
           )}
 

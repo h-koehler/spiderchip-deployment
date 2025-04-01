@@ -9,6 +9,6 @@ export class ValidationError extends AppError {
   }
 
   serializeErrors() {
-    return [{ message: this.message }];
+    return [this.message];
   }
 }

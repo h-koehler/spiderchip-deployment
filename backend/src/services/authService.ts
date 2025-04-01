@@ -9,7 +9,6 @@ import { ConflictError, InternalServerError, NotFoundError, UnauthorizedError } 
 export const registerUser = async (user: UserRequest): Promise<UserResponse> => {
     const prisma = await getPrisma();
     const { username, email, password } = user;
-    console.log(JSON.stringify(user));
 
     const existingUser = await prisma.users.findUnique({
         where: { email }
