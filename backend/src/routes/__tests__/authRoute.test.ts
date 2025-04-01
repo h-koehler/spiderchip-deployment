@@ -2,7 +2,7 @@ import request from "supertest";
 import app from "../../app";
 import { createTestUser, createAdminUser, getTestUserDTO } from "../../test/repositories";
 import { getPrisma } from "../../config/db";
-import { User, UserRequest } from "../../models/User";
+import { UserRequest } from "../../models/User";
 import { loginUser } from "../../services/authService";
 
 describe("Auth Controller Tests", () => {
@@ -34,7 +34,7 @@ describe("Auth Controller Tests", () => {
           password: testUser.password
         });
         expect(response.status).toBe(409);
-        expect(response.body.errors).toContainEqual({ message: "User already exists" });
+        expect(response.body.errors).toContainEqual("User already exists");
     });
 
     test("should authenticate an existing user", async () => {
@@ -54,7 +54,7 @@ describe("Auth Controller Tests", () => {
         });
 
         expect(response.status).toBe(401);
-        expect(response.body.errors).toContainEqual({ message: "Invalid password" });
+        expect(response.body.errors).toContainEqual("Invalid password");
     });
 
     test("should return the current user", async () => {
@@ -78,6 +78,6 @@ describe("Auth Controller Tests", () => {
         const response = await request(app).get(`${BASE_URI}/current-user`);
 
         expect(response.status).toBe(401);
-        expect(response.body.errors).toContainEqual({ message: "Access denied. No token provided." });
+        expect(response.body.errors).toContainEqual("Access denied. No token provided.");
     });
 });

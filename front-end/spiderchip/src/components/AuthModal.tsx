@@ -11,8 +11,7 @@ interface AuthModalProps {
 const AuthModalComponent: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
   const [isRegister, setIsRegister] = useState(false); // Toggle between login & register
   const [formData, setFormData] = useState({
-    firstName: "",
-    lastName: "",
+    username: "",
     email: "",
     password: "",
   });
@@ -31,8 +30,7 @@ const AuthModalComponent: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
       let response;
       if (isRegister) {
         response = await api.post("/auth/register", {
-          first_name: formData.firstName,
-          last_name: formData.lastName,
+          username: formData.username,
           email: formData.email,
           password: formData.password,
         });
@@ -44,9 +42,7 @@ const AuthModalComponent: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
       }
 
       setAuthToken(response.data.token);
-
       navigate("/game");
-
       onClose();
     } catch (err: any) {
       const firstError = err.response?.data?.errors?.[0] || "An error occurred.";
@@ -83,10 +79,8 @@ const AuthModalComponent: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
         <div className={styles.modalContent}>
           {isRegister && (
             <>
-              <label className={styles.label}>First Name</label>
-              <input type="text" name="firstName" className={styles.input} onChange={handleChange} />
-              <label className={styles.label}>Last Name</label>
-              <input type="text" name="lastName" className={styles.input} onChange={handleChange} />
+              <label className={styles.label}>Username</label>
+              <input type="text" name="username" className={styles.input} onChange={handleChange} />
             </>
           )}
 

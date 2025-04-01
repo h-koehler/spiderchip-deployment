@@ -18,6 +18,6 @@ export const errorHandler = (
 
   // If it's an unknown error, respond with a generic 500 error
   res.status(500).send({
-    errors: [{ message: "Something went wrong, please try again later" }],
+    errors: ["Something went wrong, please try again later"],
   });
 };
