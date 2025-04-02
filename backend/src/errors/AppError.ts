@@ -7,8 +7,5 @@ export abstract class AppError extends Error {
     Object.setPrototypeOf(this, AppError.prototype);
   }
 
-  abstract serializeErrors(): {
-    message: string;
-    field?: string;
-  }[];
+  abstract serializeErrors(): string[];
 }

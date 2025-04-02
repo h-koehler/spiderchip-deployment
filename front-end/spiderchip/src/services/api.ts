@@ -14,4 +14,8 @@ export const setAuthToken = (token: string | null) => {
     }
 };
 
+export const getUserLevels = () => {
+    // TODO
+}
+
 export default api;

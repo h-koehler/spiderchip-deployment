@@ -9,6 +9,6 @@ export class UnauthorizedError extends AppError {
   }
 
   serializeErrors() {
-    return [{ message: this.message }];
+    return [this.message];
   }
 }

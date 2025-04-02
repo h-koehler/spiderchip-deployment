@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import styles from "../assets/css/AuthModal.module.css";
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faXmark, faRightFromBracket } from '@fortawesome/free-solid-svg-icons';
+
+import "./AuthModal.css";
 import api, { setAuthToken } from "../services/api";
 
 interface AuthModalProps {
@@ -11,8 +14,7 @@ interface AuthModalProps {
 const AuthModalComponent: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
   const [isRegister, setIsRegister] = useState(false); // Toggle between login & register
   const [formData, setFormData] = useState({
-    firstName: "",
-    lastName: "",
+    username: "",
     email: "",
     password: "",
   });
@@ -31,8 +33,7 @@ const AuthModalComponent: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
       let response;
       if (isRegister) {
         response = await api.post("/auth/register", {
-          first_name: formData.firstName,
-          last_name: formData.lastName,
+          username: formData.username,
           email: formData.email,
           password: formData.password,
         });
@@ -44,9 +45,7 @@ const AuthModalComponent: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
       }
 
       setAuthToken(response.data.token);
-
       navigate("/game");
-
       onClose();
     } catch (err: any) {
       const firstError = err.response?.data?.errors?.[0] || "An error occurred.";
@@ -72,40 +71,57 @@ const AuthModalComponent: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
   if (!isOpen) return null;
 
   return (
-    <div className={styles.overlay} onClick={onClose}>
-      <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
-        <div className={styles.titleBar}>
-          <span className={styles.windowIcon}>🗔</span>
-          <span className={styles.titleText}>{isRegister ? "Register" : "Login"}</span>
-          <button className={styles.closeButton} onClick={onClose}>✖</button>
-        </div>
+    <div className="overlay" data-testid="overlay" onClick={onClose}>
+      <div 
+        className="modal"
+        role="dialog"
+        aria-modal="true"
+        data-testid="auth-modal"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <header className="titleBar">
+          <span className="windowIcon" aria-hidden="true"><FontAwesomeIcon icon={faRightFromBracket} /></span>
+          <h2 className="titleText">{isRegister ? "Register" : "Login"}</h2>
+          <button className="closeButton" onClick={onClose} aria-label="Close modal">
+            <FontAwesomeIcon icon={faXmark} />
+          </button>
+        </header>
 
-        <div className={styles.modalContent}>
+        <main className="modalContent">
           {isRegister && (
             <>
-              <label className={styles.label}>First Name</label>
-              <input type="text" name="firstName" className={styles.input} onChange={handleChange} />
-              <label className={styles.label}>Last Name</label>
-              <input type="text" name="lastName" className={styles.input} onChange={handleChange} />
+              <label htmlFor="username" className="label">Username</label>
+              <input id="username" type="text" name="username" className="input" onChange={handleChange} />
             </>
           )}
 
-          <label className={styles.label}>Email</label>
-          <input type="email" name="email" className={styles.input} onChange={handleChange} />
+          <label htmlFor="email" className="label">Email</label>
+          <input 
+            id="email" 
+            type="email" 
+            name="email" 
+            className="input" 
+            onChange={handleChange}
+            autoFocus={!isRegister}
+          />
 
-          <label className={styles.label}>Password</label>
-          <input type="password" name="password" className={styles.input} onChange={handleChange} />
+          <label htmlFor="password" className="label">Password</label>
+          <input id="password" type="password" name="password" className="input" onChange={handleChange} />
 
-          {error && <p className={styles.error}>{error}</p>}
+          {error && <p className="error">{error}</p>}
 
-          <button className={styles.loginButton} onClick={handleSubmit}>
+          <button className="loginButton" onClick={handleSubmit}>
             {isRegister ? "REGISTER" : "LOGIN"}
           </button>
 
-          <a href="#" className={styles.createAccount} onClick={() => setIsRegister(!isRegister)}>
+          <a
+            href="#"
+            className="createAccount" 
+            onClick={() => setIsRegister(!isRegister)}
+          >
             {isRegister ? "Already have an account? Login" : "Create an account"}
           </a>
-        </div>
+        </main>
       </div>
     </div>
   );

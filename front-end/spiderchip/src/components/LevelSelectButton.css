@@ -1,0 +1,52 @@
+li {
+    list-style: none;
+    display: inline-block;
+    float: none;
+}
+
+button.level-button {
+    display: flex;
+    padding: .5em;
+    flex-direction: column;
+    justify-content: left;
+    text-align: left;
+    background-color: #CCCCCC;
+    width: 20em;
+    height: 10em;
+    position: relative;
+    border-top: .2em solid #E0E0E0;
+    border-left: .2em solid #E0E0E0;
+    border-right: .2em solid #808080;
+    border-bottom: .2em solid #808080;
+    box-shadow: .2em 0 black,
+    0 .2em black,
+    .2em .2em black,
+    -.2em 0 white,
+    0 -.2em white,
+    -.2em -.2em white;
+}
+
+button.level-button:hover:enabled {
+    cursor: pointer;
+    border-top: .2em solid #808080;
+    border-left: .2em solid #808080;
+    border-right: .2em solid #E0E0E0;
+    border-bottom: .2em solid #E0E0E0;
+    box-shadow: .2em 0 white,
+    0 .2em white,
+    .2em .2em white,
+    -.2em 0 black,
+    0 -.2em black,
+    -.2em -.2em black;
+}
+
+.status-icon {
+    position: absolute;
+    right: .5em;
+    bottom: .5em;
+}
+
+.status-icon > img {
+    height: 2em;
+    width: 2em;
+}

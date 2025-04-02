@@ -1,0 +1,56 @@
+.puzzle-details-window {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: .75em;
+    position: fixed;
+    right: 0;
+    min-height: 25em;
+    width: 20em;
+    top: calc(50% - 10em);
+    background: var(--secondary-background-color);
+    border-top: .2em solid #E0E0E0;
+    border-left: .2em solid #E0E0E0;
+    border-right: .2em solid #808080;
+    border-bottom: .2em solid #808080;
+    box-shadow:
+            .2em 0 black,
+            0 .2em black,
+            .2em .2em black,
+            -.2em 0 white,
+            0 -.2em white,
+            -.2em -.2em white;
+}
+
+.puzzle-details {
+    display: flex;
+    flex-direction: column;
+    gap: 1em;
+}
+
+.puzzle-details h1 {
+    font-size: 2em;
+}
+
+.puzzle-details h2 {
+    font-size: 1.25em;
+    font-family: W95FA, serif;
+    font-weight: normal;
+}
+
+.puzzle-details h3 {
+    font-size: 1.25em;
+    font-family: "Perfect DOS VGA 437", sans-serif;
+}
+
+.puzzle-details p {
+    font-size: 1.25em;
+}
+
+.puzzle-details-buttons {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    gap: 1em;
+}
