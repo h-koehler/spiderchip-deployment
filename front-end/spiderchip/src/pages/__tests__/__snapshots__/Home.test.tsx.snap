@@ -1,0 +1,129 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`Home Component - AuthModal Integration opens AuthModal when clicking START with no token: Home with AuthModal Open 1`] = `
+<DocumentFragment>
+  <div
+    class="container"
+  >
+    <h1
+      class="title"
+    >
+      SPiderchip
+    </h1>
+    <p
+      class="subtitle"
+    >
+      an algorithms game
+    </p>
+    <button
+      class="startButton"
+    >
+      START
+    </button>
+    <div
+      data-testid="auth-modal"
+    >
+      Modal Open
+      <button>
+        Close
+      </button>
+    </div>
+  </div>
+</DocumentFragment>
+`;
+
+exports[`Home Component - AuthModal Integration updates AuthModal to "Modal Closed" when clicking on the overlay: Home with AuthModal Closed via Overlay 1`] = `
+<DocumentFragment>
+  <div
+    class="container"
+  >
+    <h1
+      class="title"
+    >
+      SPiderchip
+    </h1>
+    <p
+      class="subtitle"
+    >
+      an algorithms game
+    </p>
+    <button
+      class="startButton"
+    >
+      START
+    </button>
+    <div
+      data-testid="auth-modal"
+    >
+      Modal Open
+      <button>
+        Close
+      </button>
+    </div>
+  </div>
+</DocumentFragment>
+`;
+
+exports[`Home Component - AuthModal Integration updates AuthModal to "Modal Closed" when clicking the close button: Home with AuthModal Closed 1`] = `
+<DocumentFragment>
+  <div
+    class="container"
+  >
+    <h1
+      class="title"
+    >
+      SPiderchip
+    </h1>
+    <p
+      class="subtitle"
+    >
+      an algorithms game
+    </p>
+    <button
+      class="startButton"
+    >
+      START
+    </button>
+    <div
+      data-testid="auth-modal"
+    >
+      Modal Closed
+      <button>
+        Close
+      </button>
+    </div>
+  </div>
+</DocumentFragment>
+`;
+
+exports[`Home Component - AuthModal Integration updates AuthModal to "Modal Closed" when pressing the Escape key: Home with AuthModal Closed via Escape 1`] = `
+<DocumentFragment>
+  <div
+    class="container"
+  >
+    <h1
+      class="title"
+    >
+      SPiderchip
+    </h1>
+    <p
+      class="subtitle"
+    >
+      an algorithms game
+    </p>
+    <button
+      class="startButton"
+    >
+      START
+    </button>
+    <div
+      data-testid="auth-modal"
+    >
+      Modal Open
+      <button>
+        Close
+      </button>
+    </div>
+  </div>
+</DocumentFragment>
+`;
