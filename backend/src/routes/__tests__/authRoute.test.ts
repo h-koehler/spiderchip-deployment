@@ -34,7 +34,7 @@ describe("Auth Controller Tests", () => {
           password: testUser.password
         });
         expect(response.status).toBe(409);
-        expect(response.body.errors).toContainEqual("User already exists");
+        expect(response.body.errors).toContainEqual("User with this email already exists.");
     });
 
     test("should authenticate an existing user", async () => {

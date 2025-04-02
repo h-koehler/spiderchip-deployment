@@ -2,23 +2,20 @@ import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import globalConfig from "../config/global";
 import { UserRequest, UserResponse } from "../models/User";
-import { ConflictError, InternalServerError, UnauthorizedError } from "../errors";
+import { InternalServerError, UnauthorizedError } from "../errors";
 import { createUser, getUserByEmail, getUserById } from "./userService";
-import { getPrisma } from "../config/db";
 
 export const registerUser = async (user: UserRequest): Promise<UserResponse> => {
     const { username, email, password } = user;
-
+    const newUser = await createUser(username, email, password)
+    
     try {
-        const newUser = await createUser(username, email, password)
         const token = jwt.sign({ id: newUser.id }, globalConfig.jwt.secret, {
             expiresIn: globalConfig.jwt.expiresIn
         });
-
         return { token };
     } catch (error) {
-        console.log(error);
-        throw new InternalServerError("Failed to register user");
+        throw new InternalServerError("Failed to generate authentication token");
     }
 };
 
