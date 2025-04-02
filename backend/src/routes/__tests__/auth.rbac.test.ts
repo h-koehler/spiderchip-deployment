@@ -5,7 +5,7 @@ import { getPrisma } from "../../config/db";
 import { loginUser } from "../../services/authService";
 import { UserRequest } from "../../models/User";
 
-describe.only("RBAC (Role-Based Access Control) Tests", () => {
+describe("RBAC (Role-Based Access Control) Tests", () => {
     let testUser: UserRequest;
     let adminUser: UserRequest;
     const BASE_URI = "/api/test";
