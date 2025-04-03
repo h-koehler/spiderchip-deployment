@@ -1,6 +1,5 @@
 import { NextFunction, Request, Response } from "express";
 import * as roleService from "../services/roleService";
-import { InternalServerError } from "../errors";
 
 /**
  * Get all roles

@@ -1,8 +1,8 @@
 import { Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
 import globalConfig from "../config/global";
-import { getPrisma } from "../config/db";
 import { Role } from "../config/roles";
+import { getUserById } from "../services/userService";
 import { ForbiddenError, UnauthorizedError } from "../errors";
 
 // Extend Express Request to include `user`
@@ -13,7 +13,6 @@ declare module "express-serve-static-core" {
 }
 
 export const authenticateJWT = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-  const prisma = await getPrisma();
   const authHeader = req.header("Authorization");
 
   if (!authHeader || !authHeader.startsWith("Bearer ")) {
@@ -24,22 +23,7 @@ export const authenticateJWT = async (req: Request, res: Response, next: NextFun
 
   try {
     const decoded = jwt.verify(token, globalConfig.jwt.secret) as { id: string };
-    
-    const user = await prisma.users.findUnique({
-      where: { id: decoded.id },
-      select: {
-        id: true,
-        email: true,
-        roles: {
-          select: { name: true }
-        }
-      }
-    });
-
-    if (!user) {
-      return next(new ForbiddenError("User not found."));
-    }
-
+    const user = await getUserById(decoded.id);
     req.user = { 
       id: user.id, 
       email: user.email, 

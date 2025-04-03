@@ -1,60 +1,26 @@
-import { getPrisma } from "../config/db";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import globalConfig from "../config/global";
 import { UserRequest, UserResponse } from "../models/User";
-import { Role } from "../config/roles";
-import { ConflictError, InternalServerError, NotFoundError, UnauthorizedError } from "../errors";
+import { InternalServerError, UnauthorizedError } from "../errors";
+import { createUser, getUserByEmail, getUserById } from "./userService";
 
 export const registerUser = async (user: UserRequest): Promise<UserResponse> => {
-    const prisma = await getPrisma();
     const { username, email, password } = user;
-
-    const existingUser = await prisma.users.findUnique({
-        where: { email }
-    });
-    if (existingUser) {
-        throw new ConflictError("User already exists");
-    }
-
-    try {
-        const hashed_password = await bcrypt.hash(password, 10);
+    const newUser = await createUser(username, email, password)
     
-        const newUser = await prisma.users.create({
-            data: {
-                username,
-                email,
-                hashed_password,
-                roles: {
-                    connect: { name: Role.USER }
-                }
-            },
-            select: { id: true }
-        });
-
+    try {
         const token = jwt.sign({ id: newUser.id }, globalConfig.jwt.secret, {
             expiresIn: globalConfig.jwt.expiresIn
         });
-
         return { token };
     } catch (error) {
-        console.log(error);
-        throw new InternalServerError("Failed to register user");
+        throw new InternalServerError("Failed to generate authentication token");
     }
 };
 
 export const loginUser = async (user: Pick<UserRequest, "email" | "password">): Promise<UserResponse | null> => {
-    const prisma = await getPrisma();
-
-    const userRecord = await prisma.users.findUnique({
-        where: { email: user.email },
-        select: { id: true, hashed_password: true }
-    });
-
-    if (!userRecord) {
-        throw new NotFoundError("User not found.");
-    };
-
+    const userRecord = await getUserByEmail(user.email);
     const isValidPassword = await bcrypt.compare(user.password, userRecord.hashed_password);
     if (!isValidPassword) {
         throw new UnauthorizedError("Invalid password");
@@ -72,25 +38,10 @@ export const loginUser = async (user: Pick<UserRequest, "email" | "password">): 
 };
 
 export const getCurrentUser = async (userId: string): Promise<Omit<UserRequest, | "password"> & { role: string } | null>=> {
-    const prisma = await getPrisma();
-    const user = await prisma.users.findUnique({
-        where: { id: userId },
-        select: {
-            username: true,
-            email: true,
-            roles: {
-                select: { name: true }
-            }
-        }
-    });
-    
-    if (!user) {
-        throw new NotFoundError("User not found.");
-    };
-  
+    const user = await getUserById(userId);
     return { 
         username: user.username,
         email: user.email,
         role: user.roles?.name
-     };
+    };
 };
