@@ -103,12 +103,15 @@ export class ExecutionEngine {
             if (e instanceof Error) {
                 this.haltReason = e.message;
                 if (e instanceof BenignHalt) {
-                    // they did a "normal" halt (i.e. not an error), so let them succeed if they match
-                    if (this.test.expectedOutput.length === this.outputs.length
-                        && this.test.expectedOutput.every((e, i) => e === this.outputs[i])) {
-                        this.rtState = LT.SpiderStateEnum.SUCCESS;
-                    } else {
+                    // they did a "normal" halt (i.e. not an error) - let them succeed if they've done so
+                    if (this.test.expectedOutput.length !== this.outputs.length
+                        || !this.test.expectedOutput.every((e, i) => e === this.outputs[i])) {
                         this.rtState = LT.SpiderStateEnum.FAIL;
+                    }
+                    else if (this.test.expectedSlots && !this.test.expectedSlots.every((e, i) => e === this.tape[i].value)) {
+                        this.rtState = LT.SpiderStateEnum.FAIL;
+                    } else {
+                        this.rtState = LT.SpiderStateEnum.SUCCESS;
                     }
                 } else {
                     this.rtState = LT.SpiderStateEnum.ERROR;

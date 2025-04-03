@@ -23,15 +23,18 @@ export class PuzzleTest {
     slotValues: number[] | null; // `slotCount` long, null = "all zeroes", ignored if `canEditSlots` is true
     inputQueue: number[];
     expectedOutput: number[];
+    expectedSlots: number[] | null; // `slotCount` long, null = "don't care"
 
     constructor(objects: SpiderObject[],
         slotValues: number[] | null,
         inputQueue: number[],
-        expectedOutput: number[]) {
+        expectedOutput: number[],
+        expectedSlots: number[] | null = null) {
         this.objects = objects;
         this.slotValues = slotValues;
         this.inputQueue = inputQueue;
         this.expectedOutput = expectedOutput;
+        this.expectedSlots = expectedSlots;
     }
 }
 
