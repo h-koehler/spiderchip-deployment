@@ -1,18 +1,28 @@
 import {LevelItem} from "../types.ts";
 import {useNavigate} from "react-router-dom";
+import paperBkg from "../assets/images/paper.png"
 import "./PuzzleDetailPopUp.css"
+import {useEffect, useState} from "react";
 
 export default function PuzzleDetailsPopUp(props: {
     level: LevelItem,
     setSelectedLevel: (level: LevelItem | null) => void,
     updateLevelStatus: (levelId: number, newStatus: string) => void
 }) {
-    const navigate = useNavigate();
+    if (!props.level) return null;
 
-    const handleSkippedChange = () => {
-        const newStatus = props.level.status === "skipped" ? "available" : "skipped";
+    const navigate = useNavigate();
+    const [isChecked, setIsChecked] = useState(props.level.status === "skipped")
+
+    useEffect(() => {
+        setIsChecked(props.level.status === "skipped");
+    }, [props.level])
+
+    const handleCheckboxChange = () => {
+        const newStatus = isChecked ? "available" : "skipped";
+        setIsChecked(!isChecked);
         props.updateLevelStatus(props.level.id, newStatus);
-        // TODO: update database
+        // TODO: update other levels, if necesary
     }
 
     const handleStartGame = () => {
@@ -22,31 +32,37 @@ export default function PuzzleDetailsPopUp(props: {
 
     return (
         <div className="puzzle-details-window">
-            <div className="puzzle-details">
-                <div>
-                    <h1>{props.level.title}</h1>
-                    <h2>{props.level.category}</h2>
+            <img src={paperBkg} alt={"background image for puzzle details"} />
+            <div className="puzzle-details-content">
+                <div className="puzzle-details">
+                    <div>
+                        <h1>{props.level.title}</h1>
+                        <h2>{props.level.category}</h2>
+                    </div>
+                    <p>Level Lore Goes Here. Lorem ipsum odor amet, consectetuer adipiscing elit. Sapien magnis integer
+                        nascetur nullam porttitor quam fusce litora.</p>
+                    <div>
+                        <h3>Instructions</h3>
+                        <p>{props.level.description}</p>
+                    </div>
                 </div>
-                <p>Level Lore Goes Here. Lorem ipsum odor amet, consectetuer adipiscing elit. Sapien magnis integer nascetur nullam porttitor quam fusce litora.</p>
-                <div>
-                    <h3>Instructions</h3>
-                    <p>{props.level.description}</p>
-                </div>
-            </div>
-            <div className="puzzle-details-buttons">
-                <button className="primary-button" onClick={handleStartGame}>Start</button>
-                <div className="skipped-checkbox">
-                    {props.level.status === "completed" ? (
-                        <span>Completed</span>
-                    ) : (
-                        <input
-                            type="checkbox"
-                            onChange={handleSkippedChange}
-                            checked={props.level.status === "skipped"}
-                            disabled={props.level.status === "completed" || props.level.status === "not-available"}
-                        />
-                    )}
-                    {props.level.status !== "completed" && <label>Skip</label>}
+                <div className="puzzle-details-buttons">
+                    <button className="primary-button" onClick={handleStartGame}>Start</button>
+                    <div className="skipped-checkbox">
+                        {props.level.status === "completed" ? (
+                            <span>Completed</span>
+                        ) : (
+                            <label>
+                                <input
+                                    type="checkbox"
+                                    onChange={handleCheckboxChange}
+                                    checked={isChecked}
+                                    disabled={props.level.status === "completed" || props.level.status === "not-available"}
+                                />
+                                Skip
+                            </label>
+                        )}
+                    </div>
                 </div>
             </div>
         </div>

@@ -17,6 +17,15 @@ import {
     SpiderObject,
     CustomSlot,
 } from "../language-system/ls-interface-types.ts";
+import InputIcon from "../assets/images/input-icon.png";
+import DetailsIcon from "../assets/images/details-icon.png";
+import VizIcon from "../assets/images/visualization-icon.png";
+import OutputIcon from "../assets/images/output-icon.png";
+import PlayIcon from "../assets/images/play.png";
+import StepIcon from "../assets/images/step.png";
+import TestIcon from "../assets/images/test.png";
+import HintIcon from "../assets/images/hint.png";
+import ResetIcon from "../assets/images/reset.png";
 
 export default function PuzzleUI(props: { level: LevelItem }) {
     const [menuIsOpen, setMenuIsOpen] = useState(false);
@@ -84,18 +93,50 @@ export default function PuzzleUI(props: { level: LevelItem }) {
     return (
         <div className="puzzle-layout">
             <div className="input-container">
+                <div className="header">
+                    <img src={InputIcon} alt="Input Icon" />
+                </div>
                 <PuzzleInput initialValue={code} onChange={setCode}/>
-                <button className="button button-format" onClick={() => initializeRuntime(code, setParserOutput, initialVars)}>Run Code</button>
-                <button className="button button-format" onClick={() => stepCode(setParserOutput)}>Step</button>
+                <div className="action-buttons">
+                    <button className="run-button" onClick={() => initializeRuntime(code, setParserOutput, initialVars)}>
+                        <img src={PlayIcon} />
+                        Run
+                    </button>
+                    <button className="step-button" onClick={() => stepCode(setParserOutput)}>
+                        <img src={StepIcon} />
+                        Step
+                    </button>
+                    <button className="test-button">
+                        <img src={TestIcon} />
+                        Test
+                    </button>
+                    <button className="hint-button">
+                        <img src={HintIcon} />
+                        Hint
+                    </button>
+                    <button className="reset-button">
+                        <img src={ResetIcon} />
+                        Reset
+                    </button>
+                </div>
             </div>
             <div className="visualization-container">
+                <div className="header">
+                    <img src={VizIcon}/>
+                </div>
                 <PuzzleVisualization/>
             </div>
             {/*TODO: Implement buttons*/}
             <div className="output-container">
+                <div className="header">
+                    <img src={OutputIcon}/>
+                </div>
                 <PuzzleOutput output={parserOutput} />
             </div>
             <div className="details-container">
+                <div className="header">
+                    <img src={DetailsIcon}/>
+                </div>
                 <PuzzleDetails level={props.level}/>
             </div>
 

@@ -2,12 +2,29 @@ import {LevelItem} from "../types";
 import "./LevelSelectButton.css"
 import CompletedIcon from '../assets/images/completed-icon.png';
 import SkippedIcon from '../assets/images/skipped-icon.png';
+import defaultFolder from '../assets/images/folder-default.png';
+import hoverFolder from '../assets/images/folder-hover.png';
+import activeFolder from '../assets/images/folder-active.png';
+import {useState} from "react";
 
 export default function LevelSelectButton(props: {
     level: LevelItem,
+    isActive: boolean,
     setSelectedLevel: (level: LevelItem) => void,
     updateLevelStatus: (levelId: number, newStatus: string) => void;
 }) {
+    const [isHovered, setIsHovered] = useState(false);
+
+    const handleMouseEnter = () => {
+        if (props.level.status !== "not-available") {
+            setIsHovered(true);
+        }
+    };
+
+    const handleMouseLeave = () => {
+        setIsHovered(false);
+    }
+
     const handleLevelOnClick = () => {
         props.setSelectedLevel(props.level)
     }
@@ -24,7 +41,26 @@ export default function LevelSelectButton(props: {
     }
 
     return (
-        <li key={props.level.id}>
+        <li key={props.level.id}
+            className="level-select-button"
+            onMouseEnter={handleMouseEnter}
+            onMouseLeave={handleMouseLeave}
+        >
+            <img
+                src={defaultFolder}
+                alt={"closed folder"}
+                className={`icon ${props.isActive || isHovered ? "hidden" : ""}`}
+            />
+            <img
+                src={hoverFolder}
+                alt={"open folder on hover"}
+                className={`icon ${isHovered && !props.isActive ? "" : "hidden"}`}
+            />
+            <img
+                src={activeFolder}
+                alt={"active folder"}
+                className={`icon ${props.isActive ? "" : "hidden"}`}
+            />
             <button
                 className="level-button"
                 onClick={() => handleLevelOnClick()}
