@@ -13,7 +13,7 @@
 .puzzle-details-window img {
     display: block;
     width: auto;
-    height: auto;
+    height: 40em;
     max-height: 60vh;
 }
 

@@ -1,7 +1,7 @@
 import "./PuzzlePauseMenu.css"
 import {useEffect} from "react";
 import {useNavigate} from "react-router-dom";
-import PauseIcon from '../assets/images/pause-icon.png'
+import PauseIcon from '../assets/images/pause-icon.svg'
 
 export default function PuzzlePauseMenu( props: {
     setMenuIsOpen: (isOpen: boolean) => void

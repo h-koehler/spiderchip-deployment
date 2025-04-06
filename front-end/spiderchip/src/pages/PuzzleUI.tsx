@@ -17,15 +17,15 @@ import {
     SpiderObject,
     CustomSlot,
 } from "../language-system/ls-interface-types.ts";
-import InputIcon from "../assets/images/input-icon.png";
-import DetailsIcon from "../assets/images/details-icon.png";
-import VizIcon from "../assets/images/visualization-icon.png";
-import OutputIcon from "../assets/images/output-icon.png";
-import PlayIcon from "../assets/images/play.png";
-import StepIcon from "../assets/images/step.png";
-import TestIcon from "../assets/images/test.png";
-import HintIcon from "../assets/images/hint.png";
-import ResetIcon from "../assets/images/reset.png";
+import InputIcon from "../assets/images/input-icon.svg";
+import DetailsIcon from "../assets/images/details-icon.svg";
+import VizIcon from "../assets/images/visualization-icon.svg";
+import OutputIcon from "../assets/images/output-icon.svg";
+import PlayIcon from "../assets/images/play-button-icon.svg";
+import StepIcon from "../assets/images/step-button-icon.svg";
+import TestIcon from "../assets/images/test-button-icon.svg";
+import HintIcon from "../assets/images/hint-button-icon.svg";
+import ResetIcon from "../assets/images/reset-button-icon.svg";
 
 export default function PuzzleUI(props: { level: LevelItem }) {
     const [menuIsOpen, setMenuIsOpen] = useState(false);

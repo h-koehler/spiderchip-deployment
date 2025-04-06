@@ -1,10 +1,10 @@
 import {LevelItem} from "../types";
 import "./LevelSelectButton.css"
-import CompletedIcon from '../assets/images/completed-icon.png';
-import SkippedIcon from '../assets/images/skipped-icon.png';
-import defaultFolder from '../assets/images/folder-default.png';
-import hoverFolder from '../assets/images/folder-hover.png';
-import activeFolder from '../assets/images/folder-active.png';
+import CompletedIcon from '../assets/images/completed-icon.svg';
+import SkippedIcon from '../assets/images/skipped-icon.svg';
+import defaultFolder from '../assets/images/folder-default.svg';
+import hoverFolder from '../assets/images/folder-hover.svg';
+import activeFolder from '../assets/images/folder-active.svg';
 import {useState} from "react";
 
 export default function LevelSelectButton(props: {
@@ -46,6 +46,7 @@ export default function LevelSelectButton(props: {
             onMouseEnter={handleMouseEnter}
             onMouseLeave={handleMouseLeave}
         >
+            {/*<div className="folder-icon-wrapper">*/}
             <img
                 src={defaultFolder}
                 alt={"closed folder"}
@@ -61,6 +62,7 @@ export default function LevelSelectButton(props: {
                 alt={"active folder"}
                 className={`icon ${props.isActive ? "" : "hidden"}`}
             />
+            {/*</div>*/}
             <button
                 className="level-button"
                 onClick={() => handleLevelOnClick()}

@@ -1,7 +1,7 @@
 import LevelSelectButton from "../components/LevelSelectButton.tsx"
 import PuzzleDetailPopUp from "../components/PuzzleDetailPopUp.tsx";
 import {LevelItem} from "../types.ts"
-import GearIcon from "../assets/images/gear-icon.png"
+import GearIcon from "../assets/images/gear-icon.svg"
 import "./LevelSelection.css"
 import {useEffect, useRef, useState} from "react";
 import { CSSTransition } from "react-transition-group";
@@ -78,7 +78,7 @@ export default function LevelSelection(props: { setSelectedLevel: (level: LevelI
         }
 
         return () => document.removeEventListener("mousedown", handleClickOutside);
-    }, [selectedLevel])
+    }, [selectedLevel, dropdownVisible])
 
     return (
         <div className="level-selection-container">

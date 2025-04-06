@@ -1,6 +1,6 @@
 import {LevelItem} from "../types.ts";
 import {useNavigate} from "react-router-dom";
-import paperBkg from "../assets/images/paper.png"
+import paperBkg from "../assets/images/paper-background.svg"
 import "./PuzzleDetailPopUp.css"
 import {useEffect, useState} from "react";
 
