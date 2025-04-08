@@ -2,7 +2,7 @@ import './Home.css';
 import { useState } from "react";
 import AuthModal from "../components/AuthModal";
 import { useNavigate } from 'react-router-dom';
-import Logo from "../assets/images/logo.svg"
+import Logo from "../assets/images/logo.svg";
 
 const Home = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
