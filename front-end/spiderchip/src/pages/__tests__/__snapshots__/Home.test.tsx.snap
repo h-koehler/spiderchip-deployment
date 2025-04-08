@@ -5,11 +5,11 @@ exports[`Home Component - AuthModal Integration opens AuthModal when clicking ST
   <div
     class="container"
   >
-    <h1
-      class="title"
-    >
-      SPiderchip
-    </h1>
+    <img
+      alt="Spiderchip Logo"
+      class="logo"
+      src="test-file-stub"
+    />
     <p
       class="subtitle"
     >
@@ -37,11 +37,11 @@ exports[`Home Component - AuthModal Integration updates AuthModal to "Modal Clos
   <div
     class="container"
   >
-    <h1
-      class="title"
-    >
-      SPiderchip
-    </h1>
+    <img
+      alt="Spiderchip Logo"
+      class="logo"
+      src="test-file-stub"
+    />
     <p
       class="subtitle"
     >
@@ -69,11 +69,11 @@ exports[`Home Component - AuthModal Integration updates AuthModal to "Modal Clos
   <div
     class="container"
   >
-    <h1
-      class="title"
-    >
-      SPiderchip
-    </h1>
+    <img
+      alt="Spiderchip Logo"
+      class="logo"
+      src="test-file-stub"
+    />
     <p
       class="subtitle"
     >
@@ -101,11 +101,11 @@ exports[`Home Component - AuthModal Integration updates AuthModal to "Modal Clos
   <div
     class="container"
   >
-    <h1
-      class="title"
-    >
-      SPiderchip
-    </h1>
+    <img
+      alt="Spiderchip Logo"
+      class="logo"
+      src="test-file-stub"
+    />
     <p
       class="subtitle"
     >

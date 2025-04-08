@@ -19,7 +19,7 @@ const Home = () => {
 
   return (
     <div className="container">
-      <img src={Logo} className="logo"/>
+      <img src={Logo} className="logo" alt="Spiderchip Logo"/>
       <p className="subtitle">an algorithms game</p>
       <button className="startButton" onClick={handleStartClick}>
         START
