@@ -187,12 +187,12 @@ export class ExecutionEngine {
                         if (!sourceNum) {
                             throw new Error("INTERNAL ERROR: Corrupted indent stack.");
                         }
-                        const sourceAst = this.text[sourceNum]!.ast;
-                        if (PT.ASTNode.isNodeWhile(sourceAst)) {
+                        const source = this.text[sourceNum]!;
+                        if (PT.ASTNode.isNodeWhile(source.ast)) {
                             // found a while statement - go to it
                             executionLine = sourceNum;
                             break;
-                        } else if (PT.ASTNode.isNodeIf(sourceAst) && PT.ASTNode.isNodeElse(line.ast)) {
+                        } else if (source.indent === currentIndent - levels && PT.ASTNode.isNodeIf(source.ast) && PT.ASTNode.isNodeElse(line.ast)) {
                             // we were in an if, and we're pointing at the else - need to skip the else
                             // this changes where our true next line will be
                             // so, we need to restart iteration to skip over the else
