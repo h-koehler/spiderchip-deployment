@@ -213,7 +213,7 @@ function parseDataLine(line: string, lnum: number, result: PT.ParseResult) {
     if (parse.match(RE_NUMBER)) {
         // obtain the index (always present)
         const index = Number.parseInt(parse.matched);
-        if (index < 0 || index > result.data.tape.length) {
+        if (index < 0 || index >= result.data.tape.length) {
             result.errors.push(new PT.ErrorMessage(lnum, `Invalid index '${index}' for tape length '${result.data.tape.length}'.`));
             return;
         }

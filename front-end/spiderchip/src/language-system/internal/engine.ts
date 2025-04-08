@@ -18,6 +18,7 @@ export class ExecutionEngine {
     lintErrors: readonly PT.ErrorMessage[];
     labels: readonly PT.Label[];
     text: readonly (PT.Line | undefined)[];
+    trueLineCount: number;
 
     inputs: number[];
     outputs: number[] = [];
@@ -32,6 +33,7 @@ export class ExecutionEngine {
 
     jumpTo: number | undefined = 0; // jump destination if we just ran a jump - MUST POINT TO A REAL LINE
     shouldFollowIndent: boolean = false; // for if/else/while statements
+    indentSourceStack: number[] = []; // lines we indented off of
 
     constructor(puzzle: LT.Puzzle, test: LT.PuzzleTest, text: string, variables: LT.CustomSlot[]) {
         this.puzzle = puzzle;
@@ -58,12 +60,10 @@ export class ExecutionEngine {
         this.lintErrors = parseResult.errors;
         this.labels = parseResult.data.labels;
         this.text = parseResult.text;
+        this.trueLineCount = this.text.filter((x) => x !== undefined).length;
 
         // if it's valid let them know they can run, otherwise say it's invalid
         this.rtState = parseResult.valid ? LT.SpiderStateEnum.NEW : LT.SpiderStateEnum.INVALID;
-        if (this.text.filter((x) => x !== undefined).length == 0) {
-            this.rtState = LT.SpiderStateEnum.FAIL; // no code!
-        }
     }
 
     lint(): LT.SpiderError[] {
@@ -91,6 +91,11 @@ export class ExecutionEngine {
 
     step(): undefined {
         if (this.rtState !== LT.SpiderStateEnum.NEW && this.rtState !== LT.SpiderStateEnum.RUNNING) {
+            // already halted
+            return;
+        } else if (this.trueLineCount <= 0) {
+            // no code!
+            this.rtState = LT.SpiderStateEnum.FAIL;
             return;
         }
 
@@ -129,53 +134,84 @@ export class ExecutionEngine {
            - The line to execute is always whatever immediately follows a jump
          */
 
+        /* Have fun in here. Tread carefully. */
+
         let executionLine = this.jumpTo ?? this.currentLine;
-        let searchIndent = this.rtState === LT.SpiderStateEnum.NEW
+        let currentIndent = this.rtState === LT.SpiderStateEnum.NEW
             ? 0 // just starting execution
             : this.text[executionLine]?.indent ?? 0;
 
-        if (this.jumpTo || this.shouldFollowIndent) {
-            // take whatever the next available line is
+        if (this.jumpTo) {
+            // find the next available line and start there
             do {
                 executionLine = (executionLine + 1) % this.text.length;
             } while (!this.text[executionLine]);
-            if (!this.jumpTo && this.text[executionLine]!.indent <= searchIndent) {
+            // our indent stack is out of date, we need to rebuild it to match our jumped position
+            this.indentSourceStack = [];
+            let indent = this.text[executionLine]!.indent - 1;
+            let causeLine = executionLine;
+            while (indent >= 0) {
+                do {
+                    causeLine--;
+                    if (causeLine < 0) {
+                        throw new Error("INTERNAL ERROR: Couldn't find cause for indentation after jump.");
+                    }
+                } while (!this.text[causeLine] || this.text[causeLine]!.indent !== indent);
+                this.indentSourceStack.push(causeLine);
+                indent--;
+            }
+        } else if (this.shouldFollowIndent) {
+            // take whatever the next available line is
+            this.indentSourceStack.push(executionLine); // we're still on the statement that's making us go up, save it!
+            do {
+                executionLine = (executionLine + 1) % this.text.length;
+            } while (!this.text[executionLine]);
+            if (this.text[executionLine]!.indent <= currentIndent) {
                 throw new Error("INTERNAL ERROR: Expected indentation increase.");
             }
         } else {
+            let found = false;
             do {
-                executionLine = (executionLine + 1) % this.text.length;
+                // find a line to execute
+                do {
+                    executionLine = (executionLine + 1) % this.text.length;
+                } while (!this.text[executionLine] || this.text[executionLine]!.indent > currentIndent);
                 const line = this.text[executionLine];
-                if (line && line.indent < searchIndent) {
-                    // need to be careful here - if we fell more than one indent level, need to check ALL of them for while's
-                    searchIndent--;
-                    do {
-                        if (searchIndent == line.indent && PT.ASTNode.isNodeElse(line.ast)) {
-                            // if we see this, we know we passed an if statement earlier so we can fall here
-                            // ...but only if we know there are no while loops above our search level!
-                            executionLine = (executionLine + 1) % this.text.length; // get past this else statement
-                            searchIndent = line.indent;
-                        } else {
-                            // we need to iterate backwards to figure out what type of block we just dropped
-                            let blockLine = executionLine;
-                            do {
-                                blockLine--;
-                                if (blockLine < 0) {
-                                    blockLine = this.text.length - 1; // the block was the last line of code :/
-                                }
-                            } while (!this.text[blockLine] || this.text[blockLine]!.indent != searchIndent);
-                            if (PT.ASTNode.isNodeWhile(this.text[blockLine]!.ast)) {
-                                // need to re-evaluate that while loop, so go back
-                                executionLine = blockLine;
-                                break;
-                            } else {
-                                // if/else - just decrement off of it and keep on checking the levels
-                                searchIndent--;
-                            }
+                if (line && line.indent < currentIndent) {
+                    // we just fell some distance - pop off the indent stack to figure out where from
+                    // need to be careful here - if we fell more than one level, need to check ALL of them for while's
+                    let levels = currentIndent - line.indent;
+                    while (levels > 0) {
+                        // for each level we fell, pop off the reason and check if we should go back (while)
+                        const sourceNum = this.indentSourceStack.pop();
+                        if (!sourceNum) {
+                            throw new Error("INTERNAL ERROR: Corrupted indent stack.");
                         }
-                    } while (searchIndent > line.indent);
+                        const sourceAst = this.text[sourceNum]!.ast;
+                        if (PT.ASTNode.isNodeWhile(sourceAst)) {
+                            // found a while statement - go to it
+                            executionLine = sourceNum;
+                            break;
+                        } else if (PT.ASTNode.isNodeIf(sourceAst) && PT.ASTNode.isNodeElse(line.ast)) {
+                            // we were in an if, and we're pointing at the else - need to skip the else
+                            // this changes where our true next line will be
+                            // so, we need to restart iteration to skip over the else
+                            currentIndent = line.indent; // by pretending to be it!
+                            levels = -1; // and make sure we can detect this happened after this loop
+                            break;
+                        }
+                        levels--;
+                    }
+                    // here, levels is < 0 if we want to skip the else and need to do more iteration
+                    // so, if >= 0, that means we either saw something to jump back to (use) or we're good to fall off
+                    if (levels >= 0) {
+                        found = true;
+                    }
+                } else {
+                    // on our same indent - easy!
+                    found = true;
                 }
-            } while (!this.text[executionLine] || this.text[executionLine]!.indent > searchIndent);
+            } while (!found);
         }
 
         // commit our new current line
@@ -222,11 +258,12 @@ export class ExecutionEngine {
 
         if (ALLOW_EARLY_FAIL) {
             // fail them early if they output something incorrect
+            // we use a BenignHalt instead of Error because we want want to set the state to FAIL instead of ERROR
             const lastOutI = this.outputs.length - 1;
             if (lastOutI < this.test.expectedOutput.length && this.test.expectedOutput[lastOutI] != this.outputs[lastOutI]) {
-                throw new Error(`Incorrect output: ${this.outputs[lastOutI]} (expected ${this.test.expectedOutput[lastOutI]}).`);
+                throw new BenignHalt(`Incorrect output: ${this.outputs[lastOutI]} (expected ${this.test.expectedOutput[lastOutI]}).`);
             } else if (lastOutI >= this.test.expectedOutput.length) {
-                throw new Error(`Incorrect output: ${this.outputs[lastOutI]} (expected no additional output).`);
+                throw new BenignHalt(`Incorrect output: ${this.outputs[lastOutI]} (expected no additional output).`);
             }
         }
     }
