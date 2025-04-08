@@ -1,4 +1,4 @@
-import styles from '../assets/css/Home.module.css';
+import './Home.css';
 import { useState } from "react";
 import AuthModal from "../components/AuthModal";
 import { useNavigate } from 'react-router-dom';
@@ -17,10 +17,10 @@ const Home = () => {
   };
 
   return (
-    <div className={styles.container}>
-      <h1 className={styles.title}>SPiderchip</h1>
-      <p className={styles.subtitle}>an algorithms game</p>
-      <button className={styles.startButton} onClick={handleStartClick}>
+    <div className="container">
+      <h1 className="title">SPiderchip</h1>
+      <p className="subtitle">an algorithms game</p>
+      <button className="startButton" onClick={handleStartClick}>
         START
       </button>
 

@@ -5,7 +5,7 @@ import { getPrisma } from "../../config/db";
 import { loginUser } from "../../services/authService";
 import { UserRequest } from "../../models/User";
 
-describe.only("RBAC (Role-Based Access Control) Tests", () => {
+describe("RBAC (Role-Based Access Control) Tests", () => {
     let testUser: UserRequest;
     let adminUser: UserRequest;
     const BASE_URI = "/api/test";
@@ -47,7 +47,7 @@ describe.only("RBAC (Role-Based Access Control) Tests", () => {
             .set("Authorization", `Bearer ${token}`);
 
         expect(response.status).toBe(403);
-        expect(response.body.errors).toContainEqual({ message: "Forbidden: You do not have the required permissions." });
+        expect(response.body.errors).toContainEqual("Forbidden: You do not have the required permissions.");
     });
 
     test("should allow access to user route for regular users", async () => {
@@ -84,13 +84,13 @@ describe.only("RBAC (Role-Based Access Control) Tests", () => {
         const response = await request(app).get(`${BASE_URI}/admin-test`);
 
         expect(response.status).toBe(401);
-        expect(response.body.errors).toContainEqual({ message: "Access denied. No token provided." });
+        expect(response.body.errors).toContainEqual("Access denied. No token provided.");
     });
 
     test("should deny access to user route for unauthenticated users", async () => {
         const response = await request(app).get(`${BASE_URI}/user-test`);
 
         expect(response.status).toBe(401);
-        expect(response.body.errors).toContainEqual({ message: "Access denied. No token provided." });
+        expect(response.body.errors).toContainEqual("Access denied. No token provided.");
     });
 });
