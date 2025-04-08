@@ -136,6 +136,7 @@ export default function PuzzleUI(props: { level: LevelItem }) {
             <div className="details-container">
                 <div className="header">
                     <img src={DetailsIcon}/>
+                    <h2>{props.level.title}</h2>
                 </div>
                 <PuzzleDetails level={props.level}/>
             </div>

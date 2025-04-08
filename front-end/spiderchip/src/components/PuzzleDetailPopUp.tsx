@@ -19,10 +19,10 @@ export default function PuzzleDetailsPopUp(props: {
     }, [props.level])
 
     const handleCheckboxChange = () => {
-        const newStatus = isChecked ? "available" : "skipped";
-        setIsChecked(!isChecked);
-        props.updateLevelStatus(props.level.id, newStatus);
-        // TODO: update other levels, if necesary
+        if (!isChecked) {
+            setIsChecked(true)
+            props.updateLevelStatus(props.level.id, "skipped");
+        }
     }
 
     const handleStartGame = () => {
@@ -57,7 +57,7 @@ export default function PuzzleDetailsPopUp(props: {
                                     type="checkbox"
                                     onChange={handleCheckboxChange}
                                     checked={isChecked}
-                                    disabled={props.level.status === "completed" || props.level.status === "not-available"}
+                                    disabled={props.level.status === "completed" || props.level.status === "not-available" || props.level.status === "skipped"}
                                 />
                                 Skip
                             </label>

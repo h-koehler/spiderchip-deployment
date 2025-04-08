@@ -53,6 +53,10 @@ export default function LevelSelection(props: { setSelectedLevel: (level: LevelI
         )
     };
 
+    const handleHome = () => {
+        navigate("/game");
+    }
+
     const handleLogOut = () => {
             setAuthToken(null);
             localStorage.removeItem("token");
@@ -88,6 +92,7 @@ export default function LevelSelection(props: { setSelectedLevel: (level: LevelI
                 </button>
                 {dropdownVisible && (
                     <ul className="dropdown-menu">
+                        <li><button onClick={handleHome}>Home</button></li>
                         <li><button>Settings</button></li>
                         <li><button onClick={handleLogOut}>Log Out</button></li>
                     </ul>

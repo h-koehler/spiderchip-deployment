@@ -2,6 +2,7 @@ import './Home.css';
 import { useState } from "react";
 import AuthModal from "../components/AuthModal";
 import { useNavigate } from 'react-router-dom';
+import Logo from "../assets/images/logo.svg"
 
 const Home = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -18,7 +19,7 @@ const Home = () => {
 
   return (
     <div className="container">
-      <h1 className="title">SPiderchip</h1>
+      <img src={Logo} className="logo"/>
       <p className="subtitle">an algorithms game</p>
       <button className="startButton" onClick={handleStartClick}>
         START
