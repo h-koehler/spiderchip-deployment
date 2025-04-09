@@ -1,4 +1,3 @@
-import InputIcon from "../assets/images/input-icon.png";
 import { useRef } from "react";
 import "./PuzzleInput.css";
 import MonacoEditor, { OnMount } from '@monaco-editor/react';
@@ -23,9 +22,6 @@ const PuzzleInput: React.FC<CodeEditorProps> = ({ initialValue, onChange }) => {
 
     return (
         <div className="input-editor-container">
-            <div className="header">
-                <img src={InputIcon} alt="Input Icon" />
-            </div>
             <div className="editor-wrapper">
                 <MonacoEditor
                     onMount={onEditorDidMount}

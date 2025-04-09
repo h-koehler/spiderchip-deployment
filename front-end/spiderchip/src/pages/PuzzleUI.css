@@ -7,19 +7,95 @@
 
 .input-container {
     grid-column: 1 / 4;
-    grid-row: 1 / 4;
-    padding: .75em;
+    grid-row: 1 / 5;
     border-top: .2em solid white;
     border-left: .2em solid white;
     border-right: .2em solid black;
     border-bottom: .2em solid black;
     background: #E0E0E0;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.action-buttons {
+    display: flex;
+    flex-direction: row;
+    width: 100%;
+    overflow-x: hidden;
+    box-sizing: border-box;
+}
+
+.action-buttons button {
+    flex: 1 1 0;
+    min-width: 0;
+    background: transparent;
+    padding: .75em;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    gap: .5em;
+    color: white;
+    font-size: 1.25em;
+    font-family: var(--default-font-family);
+    box-sizing: border-box;
+    border: .2em solid transparent;
+}
+
+.action-buttons button:hover {
+    cursor: pointer;
+    border: .2em solid black;
+}
+
+button.run-button {
+    background: #1ab90c;
+}
+
+button.run-button:hover {
+    background: #006408;
+}
+
+button.step-button {
+    background: #ff6400;
+}
+
+button.step-button:hover {
+    background: #bb4c03;
+}
+
+button.test-button {
+    background: #3131fa;
+}
+
+button.test-button:hover {
+    background: #0000d5;
+}
+
+button.hint-button {
+    background: #b6b20e;
+}
+
+button.hint-button:hover {
+    background: #817e0b;
+}
+
+button.reset-button {
+    background: #b80303;
+}
+
+button.reset-button:hover {
+    background: maroon;
+}
+
+button img {
+    height: 1.75em;
+    width: fit-content;
 }
 
 .visualization-container {
     grid-column: 4 / 8;
-    grid-row: 1 / 5;
-    padding: .75em;
+    grid-row: 1 / 4;
     border-top: .2em solid white;
     border-left: .2em solid white;
     border-right: .2em solid black;
@@ -28,9 +104,8 @@
 }
 
 .output-container {
-    grid-column: 1 / 4;
+    grid-column: 4 / 8;
     grid-row: 4 / 5;
-    padding: .75em;
     border-top: .2em solid white;
     border-left: .2em solid white;
     border-right: .2em solid black;
@@ -41,7 +116,6 @@
 .details-container {
     grid-column: 1 / 8;
     grid-row: 5 / 6;
-    padding: .75em;
     border-top: .2em solid white;
     border-left: .2em solid white;
     border-right: .2em solid black;
@@ -53,9 +127,18 @@
     background: #800000;
     height: 1.5em;
     padding: .5em;
+    display: flex;
+    flex-direction: row;
+    gap: 1em;
+    align-items: center;
 }
 
 .header > img {
-    max-width: 100%;
-    max-height: 100%;
+    height: 1.5em;
+    width: fit-content;
+}
+
+.header > h2 {
+    color: white;
+    font-size: 1.25em;
 }

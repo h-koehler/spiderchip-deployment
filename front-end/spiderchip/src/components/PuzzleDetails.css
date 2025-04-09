@@ -11,6 +11,7 @@
 .text {
     max-height: 11vh;
     overflow: scroll;
+    padding: .5em .75em;
 }
 
 .text p {

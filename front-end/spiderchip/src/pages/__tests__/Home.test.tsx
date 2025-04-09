@@ -35,7 +35,7 @@ describe('Home Component', () => {
     );
 
     // Check for title, subtitle, and START button
-    expect(screen.getByText('SPiderchip')).toBeInTheDocument();
+    expect(screen.getByAltText('Spiderchip Logo')).toBeInTheDocument();
     expect(screen.getByText('an algorithms game')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /start/i })).toBeInTheDocument();
 
