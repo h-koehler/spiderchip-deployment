@@ -1,9 +1,9 @@
 export class Puzzle {
     slotCount: number; // number of varslots present
     testCases: PuzzleTest[]; // test cases for this puzzle
-    defaultSlotNames: (string | null | undefined)[] | null; // default slot names to use, `slotCount` long, undefined/null if no name for that slot
-    canEditSlots: boolean; // whether or not this puzzle allows editing initial slot values
-    canRenameSlots: boolean; // whether or not this puzzle allows renaming slots
+    defaultSlotNames: (string | null | undefined)[] | null; // (null default) default slot names to use, `slotCount` long, undefined/null if no name for that slot
+    canEditSlots: boolean; // (false default) whether or not this puzzle allows editing initial slot values
+    canRenameSlots: boolean; // (true default) whether or not this puzzle allows renaming slots
 
     constructor(slotCount: number,
         testCases: PuzzleTest[],
@@ -20,10 +20,10 @@ export class Puzzle {
 
 export class PuzzleTest {
     objects: SpiderObject[];
-    slotValues: number[] | null; // `slotCount` long, null = "all zeroes", ignored if `canEditSlots` is true
+    slotValues: number[] | null; // `slotCount` long, null = "all zeroes", ignored (= assumed null) if `canEditSlots` is true
     inputQueue: number[];
     expectedOutput: number[];
-    expectedSlots: number[] | null; // `slotCount` long, null = "don't care"
+    expectedSlots: number[] | null; // `slotCount` long, null = "don't care" (only look at expectedOutput)
 
     constructor(objects: SpiderObject[],
         slotValues: number[] | null,
