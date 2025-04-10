@@ -23,7 +23,7 @@ export class PuzzleTest {
     slotValues: number[] | null; // `slotCount` long, null = "all zeroes", ignored (= assumed null) if `canEditSlots` is true
     inputQueue: number[];
     expectedOutput: number[];
-    expectedSlots: number[] | null; // `slotCount` long, null = "don't care" (only look at expectedOutput)
+    expectedSlots: number[] | null; // up to `slotCount` long (however many to check), null = "don't care" (only look at expectedOutput)
 
     constructor(objects: SpiderObject[],
         slotValues: number[] | null,
@@ -69,6 +69,11 @@ export interface SpiderRuntime {
      * Obtain linter errors from parse result. Empty array if no errors.
      */
     lint(): SpiderError[];
+
+    /**
+     * Obtain the true line count for the code entered (so, excluding comment-only or empty lines).
+     */
+    lineCount(): number;
 
     /**
      * Obtain the current state of the runtime environment.

@@ -71,6 +71,10 @@ export class ExecutionEngine {
         return this.lintErrors.map((e) => new LT.SpiderError(e.line, e.msg));
     }
 
+    lineCount(): number {
+        return this.trueLineCount;
+    }
+
     state(): LT.SpiderState {
         // need to copy everything so they can't mess with our internals
         const retTape = this.tape.map((s) => new LT.SpiderSlot(s.value, s.name ?? ""));

@@ -38,6 +38,13 @@ class Runtime implements LT.SpiderRuntime {
         return this.primaryEngine.lint();
     }
 
+    lineCount(): number {
+        if (!this.primaryEngine) {
+            throw new Error("Runtime does not have an active engine. Did you forget to call .init()?");
+        }
+        return this.primaryEngine.lineCount();
+    }
+
     state(): LT.SpiderState {
         if (!this.primaryEngine) {
             throw new Error("Runtime does not have an active engine. Did you forget to call .init()?");
