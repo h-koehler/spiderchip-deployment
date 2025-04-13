@@ -5,6 +5,8 @@ import LevelSelection from "./pages/LevelSelection.tsx";
 import PuzzleUI from "./pages/PuzzleUI.tsx";
 import { LevelItem } from "./types.ts";
 import { useState } from "react";
+import About from './pages/About';
+import LanguageExplanation from './pages/LanguageExplanation.tsx';
 
 const isAuthenticated = () => {
     return !!localStorage.getItem("token");
@@ -29,6 +31,8 @@ function App() {
                 <Route path='/game' element={<ProtectedRoute><Game/></ProtectedRoute>}/>
                 <Route path='/level-select' element={<LevelSelection setSelectedLevel={setSelectedLevel}/>}/>
                 <Route path='/puzzle-ui' element={selectedLevel ? <PuzzleUI level={selectedLevel}/> : <Navigate to="/level-select" replace />} />
+                <Route path="/about" element={<About />} />
+                <Route path="/about/language" element={<LanguageExplanation />} />
             </Routes>
         </Router>
     );

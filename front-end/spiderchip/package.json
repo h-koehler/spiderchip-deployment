@@ -21,6 +21,7 @@
     "monaco-jsx-highlighter": "^2.0.4",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
+    "react-markdown": "^10.1.0",
     "react-modal": "^3.16.3",
     "react-router-dom": "^6.30.0",
     "react-transition-group": "^4.4.5"
