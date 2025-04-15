@@ -17,7 +17,6 @@ const PuzzleInput: React.FC<CodeEditorProps> = ({ initialValue, onChange, lineHi
     const onEditorDidMount: OnMount = (editor, _) => {
         editorRef.current = editor;
         editor.onDidChangeModelContent(() => {
-            decorationsRef.current?.clear();
             onChange(editor.getValue());
         });
 

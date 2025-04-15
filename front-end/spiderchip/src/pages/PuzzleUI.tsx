@@ -118,10 +118,17 @@ export default function PuzzleUI(props: { level: LevelItem }) {
     const editCode = (newCode: string) => {
         setCode(newCode);
 
+        // parse whatever they just changed the code to
         runtime.current.init(newCode, initialVars, caseNum);
 
-        // NOTE: nothing in the visualizer changes here, so we don't setRtState
-        //       once they actually try to run, that'll be pulled
+        // check the PREVIOUS state - if it's already new, we shouldn't need to re-render
+        // this prevents spamming visualizer updates while just writing code
+        if (rtState?.state !== LT.SpiderStateEnum.NEW) {
+            setRtState(runtime.current.state());
+        }
+
+        // reset all highlights since they're editing code now
+        setHighlightedLines(undefined);
 
         // keep the live linter output up to date (not error highlights, though)
         updateLinting(false, true);
@@ -152,7 +159,7 @@ export default function PuzzleUI(props: { level: LevelItem }) {
 
     const updateCodeState = () => {
         if (updateLinting(true)) {
-            // you have errors, you may not run
+            // you have errors, show that instead
             return;
         }
 
