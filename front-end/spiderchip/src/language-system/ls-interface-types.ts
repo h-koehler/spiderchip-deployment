@@ -7,7 +7,7 @@ export class Puzzle {
 
     constructor(slotCount: number,
         testCases: PuzzleTest[],
-        defaultSlotNames: string[] | null = null,
+        defaultSlotNames: (string | null | undefined)[] | null = null,
         canEditSlots: boolean = false,
         canRenameSlots: boolean = true) {
         this.slotCount = slotCount;
