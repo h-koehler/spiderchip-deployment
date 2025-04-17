@@ -241,10 +241,8 @@ export class ExecutionEngine {
             const slotLocation = this.getVarslotIndex(line.ast.varslot);
             const value = this.evalEquation(line.ast.equation);
             this.tape[slotLocation].value = value;
-        } else if (PT.ASTNode.isNodeFunccall(line.ast)) {
-            this.callFunction(line.ast.func, line.ast.equation);
-        } else if (PT.ASTNode.isNodeObjFunccall(line.ast)) {
-            this.callObjFunction(line.ast.func, line.ast.object, line.ast.equation);
+        } else if (PT.ASTNode.isNodeEquation(line.ast)) {
+            this.evalEquation(line.ast);
         } else if (PT.ASTNode.isNodeIf(line.ast) || PT.ASTNode.isNodeWhile(line.ast)) {
             const eq = this.evalEquation(line.ast.equation);
             if (eq !== 0) {
@@ -253,11 +251,15 @@ export class ExecutionEngine {
         } else if (PT.ASTNode.isNodeElse(line.ast)) {
             // we should not be evaluating the else at all if we're skipping it
             this.shouldFollowIndent = true;
+        } else if (PT.ASTNode.isNodeFunccall(line.ast)) {
+            this.callFunction(line.ast.func, line.ast.equation);
+        } else if (PT.ASTNode.isNodeObjFunccall(line.ast)) {
+            this.callObjFunction(line.ast.func, line.ast.object, line.ast.equation);
         } else if (PT.ASTNode.isNodeJump(line.ast)) {
             const node = line.ast; // TS doesn't like smart casting into the `find`
             this.jumpTo = this.labels.find((l) => l.name === node.destination)?.lineNumber;
         } else {
-            throw new Error(`INTERNAL ERROR: Unrecognized root node type ${typeof line.ast}.`);
+            throw new Error(`INTERNAL ERROR: Unrecognized root node on line ${this.currentLine}.`);
         }
 
         if (ALLOW_EARLY_FAIL) {
@@ -443,7 +445,7 @@ export class ExecutionEngine {
         } else if (PT.ASTNode.isNodeObjFunccall(node)) {
             return this.callObjFunction(node.func, node.object, node.equation);
         } else {
-            throw new Error(`INTERNAL ERROR: Unrecognized equation node type ${typeof node}.`);
+            throw new Error(`INTERNAL ERROR: Unrecognized equation node type.`);
         }
     }
 
