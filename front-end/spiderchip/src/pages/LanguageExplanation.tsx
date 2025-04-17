@@ -6,286 +6,297 @@ import paperBkg from '../assets/images/paper-background.svg';
 const LanguageExplanation: React.FC = () => {
     const navigate = useNavigate();
 
-    const markdown = `# 0. The Language System Object
+    const markdown = `# Overview
 
+The Spider programming language is designed to read and write simple integers and make use of basic objects.
 
-Each puzzle must instantiate an instance of the language system object, which
-will be called "SpiderRuntime". This example will refer to it as \`rt\`.
+Each program consists of three components:
+1. Actual program code
+2. Variable slots
+3. Module objects
 
-Each instance may only contain one program, but there is no global state that
-would prevent making multiple (if for some reason you wanted to).
+Execution of a Spider program begins at the first line in the code.
+After the last line is executed, the program will automatically restart at the top.
+Note that variables *do not reset* when the program jumps to the top.
 
+Once a Spider program has completed its objective, it should halt either by trying to read more input or calling \`end()\`.
 
-# 1. Initializing
+# Features
 
+### Variable Slot
 
-### Creating and Initializing
+Variable slots are places to store integers from -999 to 999.
 
-The constructor for a SpiderRuntime will take a \`puzzle\` object (see below).
-It will NOT do any initialization. Creation of a runtime object MUST always be
-immediately followed by at least a call to \`rt.init(...)\`.
+Slots can have names, which are shown next to the slot on the panel to the right.
 
-The \`rt.init(text, variables, caseNum)\` function initializes the object. This
-will assign variable names, parse the users code, and prepare to execute the
-named test case.
+When referencing a slot, simply use the variable name associated with it (e.g. \`x\`).
+To reference slots relative to another slot, use \`x[N]\` where N is any equation (e.g. \`x[2]\` or \`x[y + 3]\`).
 
-The following sections define the meaning of the placeholders used above.
+### Halting (Stopping)
 
-### \`text\`
+Calling the \`end()\` function will halt (stop) a Spider program.
+When this function is called, no more code will execute.
 
-\`text\` is the .text segment as described by the language design. This is all
-of the code that the user has typed. It may be an empty string.
+The Spider program will also halt under the following additional circumstances:
+- \`input()\` is called when there are no more inputs.
+- \`.next()\` is called on a command object which has no more commands.
 
-Yes, this means that the entire code must be sent to the runtime for every
-change. It would be a good idea to debounce user changes for a couple seconds
-before sending it off to the parser for linting (with an early call if they
-try to run it). This is why local execution is convenient - no network spam.
+The Spider program will *crash* under the following circumstances (avoid these cases!):
+- Attempt to divide by zero.
+- Attempt to reference a slot which does not exist.
+- Attempt to pop from an empty stack.
+- Attempt to dequeue from an empty queue.
 
-### \`variables\`
+### Input and Output
 
-\`variables\` is an array of objects specifying the varslot names and default
-values that the user has specified. It takes the following format:
+Basic input and output is available to every Spider module.
 
-\`\`\`JS
-[
-	{
-		slot: 0,
-		name: "x",
-		value: 2
-	},
-	{
-		slot: 1,
-		name: "y"
-	}
-]
+To read input, call the \`input()\` function.
+The next available input is returned by this call.
+If no inputs are available, the program will halt normally.
+
+To send output, call the \`output(...)\` function, passing the output to send.
+Only a single integer may be written at a time.
+
+### Command Object
+
+Certain modules are equipped with a command object, often called \`cmd\`.
+
+The command object supports only one function: \`cmd.next()\`.
+The \`cmd.next()\` function works similarly to \`input()\`; it returns the next available command.
+
+### Stack Object
+
+Certain modules are equipped with a stack object, often called \`s\`.
+
+The stack object supports three functions:
+- \`s.push(equation)\` Add the result of the given equation to the specified stack (in this case, \`s\`).
+- \`s.pop()\` Return the value at the top of the specified stack (in this case, \`s\`).
+- \`s.length()\` Return the number of items in the specified stack (in this case, \`s\`).
+
+Examples:
+\`s.push(3)\`
+\`x = s.pop()\`
+\`if (s.length() > 0):\`
+
+### Queue Object
+
+Certain modules are equipped with a queue object, often called \`q\`.
+
+The queue object supports three functions:
+- \`s.enqueue(equation)\` Add the result of the given equation to the specified queue (in this case, \`q\`).
+- \`s.dequeue()\` Return the value at the front of the specified queue (in this case, \`q\`).
+- \`s.length()\` Return the number of items in the specified queue (in this case, \`q\`).
+
+Examples:
+\`q.enqueue(3)\`
+\`x = q.dequeue()\`
+\`if (q.length() > 0):\`
+
+# Code Statements
+
+### Comments
+
+Any text after a # character is a comment, and will not be executed as code.
+
+For example, the following only executes as \`x = 2\`, as the \`+ 3\` is in a comment: \`x = 2 # + 3\`.
+
+You can use comments to make notes in your code.
+
+### Variable Assignment
+
+Writes the result of the equation on the right side of the equals sign to the variable slot on the left.
+
+Structure:
+\`slot = equation\`
+
+Examples:
+\`x = 2\`
+\`y = x * 3\`
+\`z[2] = input() + 2\`
+
+### Equations and Comparisons
+
+Spider programs support basic math operations and comparisons on integers.
+
+Each equation includes a sequence of operands (variable slots or function calls) with operators between them.
+Parentheses around parts of the equation can be used to enforce order of operations, which would normally use PEMDAS.
+
+The following list shows all supported math operators:
+- \`+\` Add
+- \`-\` Subtract right from left
+- \`*\` Multiply
+- \`/\` Divide left by right, discarding remainder (e.g., 7 / 3 = 2)
+- \`%\` Divide left by right, saving only the remainder (e.g., 7 % 3 = 1)
+
+The following list shows all supported comparison operators:
+- \`>\` True if left side is greater than right side
+- \`>=\` True if left side is greater than or equal to right side
+- \`==\` True if left side is equal to right side
+- \`!=\` True if left side is NOT equal to right side
+- \`<=\` True if left side is less than or equal to right side
+- \`<\` True if left side is less than right side
+
+The following list shows all supported boolean operators:
+- \`||\` ("or") True if either the left side or right side is true
+- \`&&\` ("and") True if both the left side and right side is true
+
+The following are some examples of equations:
+\`2\`
+\`x + 2\`
+\`x * 6 / 3\`
+\`2 + input() % 3\`
+\`2 + cmd.next() - 1\`
+\`(3 + 1) * 3\`
+\`x < 5\`
+\`x > 2 && y < 1\`
+
+### Function Calls
+
+Function calls are created by writing the name of the function followed by a pair of open and close parentheses.
+Some functions take "arguments," which are written between the parentheses.
+
+Function calls may be used in equations.
+
+When a function "returns" a value, this can be thought of as dynamically replacing the function with the value returned.
+For example, \`x = input()\` when \`input()\` returns 2 is equivalent to \`x = 2\`.
+
+The following are examples of function calls:
+\`end()\`
+\`input()\`
+\`output(y + 2)\`
+
+### Object Function Calls
+
+Object function calls are similar to regular function calls, but declare which object they should use at the beginning of the call.
+The object's name is written, then a period, then the function name itself.
+
+Object function calls, like regular functions, may be used in equations.
+
+The following are examples of object function calls:
+\`cmd.next()\`
+\`s.push(10 / z)\`
+
+### Conditional Statements
+
+Conditional code is accomplished using if and else statements.
+
+If statements use the following structure: \`if (equation):\`.
+If the equation is true, then the if statement "passes" and its "block" is executed.
+
+The block for an if statement is the indented lines of code immediately following this statement.
+For example, in the following code, the block is the two lines that have extra spaces at the front:
+\`\`\`
+if (x == 2):
+	output(x) # inside if statement
+	x = 3     # inside if statement
+output(x)     # OUTSIDE of if statement
 \`\`\`
 
-Note that some puzzles may disallow changing the default value, so \`value\`
-should always be absent in this case. Additionally, users are not able to
-change the name of objects (e.g., cmd or stack objects defined by puzzles).
-
-### \`puzzle\`
-
-\`puzzle\` is a puzzle object which will manage knowledge about the puzzle. It
-should be loaded when the user clicks into this puzzle.
-The following entries will be present:
-- \`slotCount: number\`: A number indicating how many varslots are present.
-- \`canEdit: boolean\`: A boolean indicating if varslots can have their default values changed.
-- \`canRename: boolean\`: A boolean indicating if varslots can be renamed.
-- \`slotNames?: string[]\`: If \`canRename\` is false, the list of names to use. Index corresponds with slot number. Unnamed slots are \`undefined\`.
-- \`testCases: object[]\`: An array of test case objects. Frontend only needs to look at the length of this to choose a random one on startup.
-
-The \`testCases\` entry defines stuff like the .data objects (e.g., "is there a
-stack?"), default slot values, and so on. The frontend must call \`rt.state()\`
-(see below) immediately after initializing the runtime so that the visuals can
-display these to the player as they start to write the code. Sorry if that's
-inconvenient, but it's tricky since it can change per case.
-
-I'm not sure what the structure of a test case object will look like at this
-time, since I need to come up with a solution to apply the \`variables\` names
-and expose logic for input/output management. That'll come with the puzzle
-design itself, so I'm waiting.
-
-### \`caseNum\`
-
-\`caseNum\` is the test case number to use. This should not be changed randomly
-each time the code is re-initialized, but rather chosen once from the
-available tests and used until it has been solved successfully or indicated
-as "dubious" (see section 3).
-
-### Saving User Data
-
-The \`text\` and \`variables\` objects constitute user data and would need to be
-saved to the server to preserve progress. Shouldn't be too hard - the \`text\`
-is quite literally just a string and \`variables\` is trivial JSON. Don't forget
-the solved/skipped/available/locked flag.
-
-
-# 2. Linting
-
-
-Call \`rt.lint()\` to obtain linting output for the given code. The result will
-be an array of objects containing information about linter errors. Each error
-follows the structure shown below:
-
-\`\`\`JS
-[
-	{
-		line: 2,
-		error: "Unexpected indentation"
-	},
-	{
-		line: 14,
-		error: "Unknown identifier 'x'"
-	}
-]
+Else statements use the following structure: \`else:\`.
+Else statements run if the previous if statement failed. It is illegal to place an else statement without a corresponding if.
+For example, consider the following code:
+\`\`\`
+if (x == 2):
+	output(x)
+else:
+	output(y)
 \`\`\`
 
-Note that more than one error may appear per line, and some errors may not
-appear during linting (e.g., if other parsing prevents them from showing up).
+If x is 2, then the first block (\`output(x)\`) will run.
+However, if x is not 2, then the second block (\`output(y)\` will run instead.
 
-Line numbers will be offset such that the first line of the .text section is
-line number 1.
-
-It is important for the frontend to ensure that varslot names are legal, in
-particular, that they follow the regex \`[A-z_][A-z0-9_]*\`. Failure to do so
-would allow very likely allow the user to customize the .data section and
-corrupt the puzzle's runtime environment.
-
-
-# 3. Running
-
-
-### Initializing
-
-The runtime can be reset by calling \`rt.init(...)\` again. The frontend MUST
-immediately call \`rt.state()\` to acquire the default state of all objects, as
-test cases may have different initial variables.
-
-### Stepping
-
-The runtime can be advanced using the \`rt.step()\` function. This function will
-always return nothing. Trying to step a halted/invalid program does nothing.
-
-### Reading state
-
-The current state can be checked using the \`rt.state()\` function. This will
-return the following object. The "line" entry refers to the line that was
-just executed by the previous \`rt.step()\`:
-
-\`\`\`TS
-interface SpiderObject {
-	name: string,
-	type: string,
-	contents: number[]
-}
-
-interface SpiderState {
-	varslots: number[],
-	objs: SpiderObject[],
-	state: string,
-	line?: number,
-	error?: string,
-	case?: number
-}
+Blocks are allowed to contain other blocks inside them, for example:
+\`\`\`
+if (x == 3):
+	if (y == 2):
+		output(y)
+	else:
+		output(x)
 \`\`\`
 
-Example (if the code is currently running):
+### While Loops
 
-\`\`\`JS
-{
-	varslots: [3, 6, 2, 1, 9, 2, 6],
-	objs: [
-		{
-			name: "stack1",
-			type: "stack",
-			contents: [1, 2, 3]
-		},
-		{
-			name: "stack2",
-			type: "stack",
-			contents: [5, 4]
-		},
-		{
-			name: "cmd",
-			type: "cmd",
-			contents: []
-		}
-	],
-	state: "running",
-	line: 14
-}
+While loops are similar to if statements, but continue to execute their block as long as the statement is true.
+
+For example, the following code will run once:
+\`\`\`
+x = 3
+if (x > 0):
+	output(x)
+	x = x - 1
 \`\`\`
 
-Alternatively (if there is a parse error preventing running - see \`rt.lint()\`):
-
-\`\`\`JS
-{
-	varslots: [0, 0],
-	objs: [
-		{
-			name: "s",
-			type: "stack",
-			contents: [1, 2, 3]
-		}
-	],
-	state: "invalid"
-}
+The following code will run three times:
+\`\`\`
+x = 3
+while (x > 0):
+	output(x)
+	x = x - 1
 \`\`\`
 
-Alternatively (if execution has not yet started and there are no parse errrs):
+# Advanced Features
 
-\`\`\`JS
-{
-	varslots: [1, 2, 0, 0, 0],
-	objs: [],
-	state: "new"
-}
+These features are considered advanced functionality.
+However, they may be useful under certain circumstances.
+
+### Short Circuiting
+
+When using the \`&&\` or \`||\` operators, the right side of the equation may not be evaluated.
+
+For \`&&\`, the right side will not be evaluated if the left side is false (as the result is always false).  
+For \`||\`, the right side will not be evaluated if the left side is true (as the result is always true).
+
+This functionality is useful to prevent evaluating an equation that may have side effects, for example, \`x < 2 && output(x)\` only outputs s if x < 2 is true.
+
+### Comparison as Value
+
+Comparison operators, such as \`<\` or \`==\`, and boolean operators, \`||\` and \`&&\`, do not actually evaluate as "true" and "false."
+Rather, they evaluate as the integers 0 and 1, where 0 is false and 1 is true.
+In fact, any value that is not 0 is considered "truthy" and will be considered true in an equation.
+
+For example, if x is 3, then \`if (x):\` will pass.
+
+### Unary Operators
+
+Spider programs support two operators in addition to the ones listed prior.
+These operators are considered "unary" operators - they apply to only one part of the equation, rather than doing math on two values.
+
+The \`-\` unary operator performs negation.
+For example, if x is 3, then \`-x\` will be -3.
+
+The \`!\` unary operator performs boolean "not."
+For example, if \`(x > 3)\` is true, then \`!(x > 3)\` is false.
+This can have useful effects when combined with the comparison-as-value feature.
+
+### Undefined Return values
+
+Certain functions do not return anything, such as \`output(...)\` or \`s.push(...)\`.
+These functions actually always return the value 0.
+
+### Unconditional Jumps
+
+Spider programs support label statements and unconditional jumps.
+
+First create a label by typing a name and then a colon: \`target:\`.
+Next, use the jump operation by typing the word "jump" and then the label name: \`jump target\`.
+
+Execution continues on the line immediately following the label.
+The label may be anywhere in the program.
+
+Example:
+\`\`\`
+x = 3
+target:
+output(x) # line executed after jumping
+x = x - 1
+if (x > 0):
+	jump target
+end()
 \`\`\`
 
-Alternatively (if an error occurred):
+Remember that Spider programs automatically jump to the top after executing the last line, so a manual jump is not necessary.
 
-\`\`\`JS
-{
-	varslots: [0, 0],
-	objs: [],
-	state: "error",
-	line: 4,
-	error: "Divide by zero"
-}
-\`\`\`
-
-Alternatively (if the test failed/halted early):
-
-\`\`\`JS
-{
-	varslots: [1, 2, 0, 0, 0],
-	objs: [],
-	state: "fail",
-	line: 3
-}
-\`\`\`
-
-Alternatively (if all test cases passed):
-
-\`\`\`JS
-{
-	varslots: [1, 2, 0, 0, 0],
-	objs: [],
-	state: "success",
-	line: 3
-}
-\`\`\`
-
-Alternatively (if the test case passed but others failed):
-
-\`\`\`JS
-{
-	varslots: [1, 2, 0, 0, 0],
-	objs: [],
-	state: "dubious",
-	line: 3,
-	case: 2
-}
-\`\`\`
-
-The "dubious" case would occur if the running test case passed, but at least
-one other did not. If this happens, the puzzle is NOT considered complete, and
-the simulation should call for the case number specified in the "case" entry to
-be run next (via the \`rt.init(...)\` function).
-
-Whenever a test completes, the runtime will execute all tests to ensure that
-the solution actually passes them all. So, if \`rt.state()\` returns "success",
-the puzzle is considered complete.
-
-### Animating
-
-The animations for the previous step can be acquired using the \`rt.anim()\`
-function. This will return a list of animations that should be displayed to
-animate the change from the previous state to the current.
-
-I don't have a design for animations yet. Focus on making the rest work and
-then we can figure out what to do for animations.
 `;
 
     return (
@@ -296,7 +307,7 @@ then we can figure out what to do for animations.
                 className="background-image"
             />
             <div className="content-overlay">
-                <h1>Language Explanation</h1>
+                <h1>Programmer's Manual</h1>
                 <div className="about-content">
                     <div className="markdown-body" style={{overflow: 'auto', maxHeight: '70vh'}}>
                         <ReactMarkdown>{markdown}</ReactMarkdown>

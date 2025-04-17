@@ -59,7 +59,7 @@ const About: React.FC = () => {
                         className="primary-button"
                         onClick={() => navigate('/about/language')}
                     >
-                        Language Explanation
+                        Programmer's Manual
                     </button>
                 </div>
             </div>
