@@ -23,6 +23,7 @@ const dummyPuzzle = new LT.Puzzle(3, [new LT.PuzzleTest([new LT.SpiderObject("st
 export default function PuzzleUI(props: { level: LevelItem }) {
     const runtime = useRef<LT.SpiderRuntime>(createRuntime(dummyPuzzle));
     const [rtState, setRtState] = useState<LT.SpiderState | null>(null);
+    const [anims, setAnims] = useState<LT.SpiderAnimation[]>([]);
     const [caseNum, setCaseNum] = useState<number>(0);
 
     const [output, setOutput] = useState<string>("");
@@ -83,6 +84,7 @@ export default function PuzzleUI(props: { level: LevelItem }) {
                 runtime.current = createRuntime(puzzle);
                 runtime.current.init("", vars, chosenCase);
                 setRtState(runtime.current.state());
+                setAnims([]);
             } catch (err) {
                 console.error("Failed to fetch puzzle data:", err);
             }
@@ -120,11 +122,13 @@ export default function PuzzleUI(props: { level: LevelItem }) {
 
         // parse whatever they just changed the code to
         runtime.current.init(newCode, initialVars, caseNum);
+        const state = rtState ?? runtime.current.state();
 
         // check the PREVIOUS state - if it's already new, we shouldn't need to re-render
         // this prevents spamming visualizer updates while just writing code
-        if (rtState?.state !== LT.SpiderStateEnum.NEW) {
+        if (state.state !== LT.SpiderStateEnum.NEW && state.state !== LT.SpiderStateEnum.INVALID) {
             setRtState(runtime.current.state());
+            setAnims([]);
         }
 
         // reset all highlights since they're editing code now
@@ -150,8 +154,11 @@ export default function PuzzleUI(props: { level: LevelItem }) {
 
     const stepCode = () => {
         try {
-            runtime.current.step();
-            updateCodeState();
+            if (rtState?.state === LT.SpiderStateEnum.NEW || rtState?.state === LT.SpiderStateEnum.RUNNING) {
+                // this function would have no effect, but we don't want to cause irrelevant visual re-updates
+                runtime.current.step();
+                updateCodeState();
+            }
         } catch (e) {
             console.log("Problem stepping:", e);
         }
@@ -165,6 +172,7 @@ export default function PuzzleUI(props: { level: LevelItem }) {
 
         const newState = runtime.current.state();
         setRtState(newState);
+        setAnims(runtime.current.anim());
 
         const codeOutputs = newState.output.join("\n");
         let additionalMessage = null;
@@ -197,6 +205,7 @@ export default function PuzzleUI(props: { level: LevelItem }) {
         setOutput("");
         setHighlightedLines(undefined);
         setRtState(runtime.current.state());
+        setAnims([]);
         updateLinting();
     }
 
@@ -239,7 +248,7 @@ export default function PuzzleUI(props: { level: LevelItem }) {
                 <div className="header">
                     <img src={VizIcon} />
                 </div>
-                {rtState && <PuzzleVisualization state={rtState} />}
+                {rtState && <PuzzleVisualization state={rtState} animations={anims} />}
             </div>
             <div className="output-container">
                 <div className="header">
