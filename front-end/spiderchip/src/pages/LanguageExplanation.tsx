@@ -1,8 +1,9 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import '../styles/About.css';
+import '../components/Memo.css';
 import ReactMarkdown from 'react-markdown';
-import paperBkg from '../assets/images/paper-background.svg';
+import Memo from '../components/Memo';
+
 const LanguageExplanation: React.FC = () => {
     const navigate = useNavigate();
 
@@ -300,28 +301,18 @@ Remember that Spider programs automatically jump to the top after executing the 
 `;
 
     return (
-        <div className="about-container" style={{overflow: 'auto', maxHeight: '70vh'}}>
-            <img 
-                src={paperBkg} 
-                alt="background image for about page" 
-                className="background-image"
-            />
-            <div className="content-overlay">
-                <h1>Programmer's Manual</h1>
-                <div className="about-content">
-                    <div className="markdown-body" style={{overflow: 'auto', maxHeight: '70vh'}}>
-                        <ReactMarkdown>{markdown}</ReactMarkdown>
-                    </div>
-                </div>
-                <button 
-                    className="primary-button"
-                    onClick={() => navigate('/about')}
-                >
-                    Back to About
-                </button>
+        <Memo>
+            <h1>Programmer's Manual</h1>
+            <div className="markdown-body">
+                <ReactMarkdown>{markdown}</ReactMarkdown>
             </div>
-            
-        </div>
+            <button
+                className="primary-button"
+                onClick={() => navigate('/about')}
+            >
+                Back to About
+            </button>
+        </Memo>
     );
 };
 
