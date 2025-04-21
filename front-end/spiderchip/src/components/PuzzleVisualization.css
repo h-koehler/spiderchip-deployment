@@ -1,0 +1,53 @@
+.viz-container {
+    padding: 2em;
+    display: flex;
+    flex-direction: column;
+    gap: 1em;
+    align-items: center;
+    justify-content: center;
+}
+
+.slot-grid {
+    display: grid;
+    gap: 1em;
+    grid-template-rows: repeat(1, 5em);
+    justify-content: center;
+}
+
+.slot-grid > .var-slot {
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: white
+}
+
+.spider-grid {
+    display: grid;
+    gap: 1em;
+    grid-template-rows: repeat(1, 5em);
+    justify-content: center;
+}
+
+.spider-grid > .spider-slot{
+    width: 5em;
+    height: 5em;
+}
+
+.inactive-spider {
+    width: 5em;
+    height: 5em;
+}
+
+.inactive-spider > .spider-icon,
+.spider-slot > .spider-icon {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: rgb(128, 0, 0);
+    width: 100%;
+    height: 100%;
+    color: white;
+}

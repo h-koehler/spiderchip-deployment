@@ -239,7 +239,7 @@ export default function PuzzleUI(props: { level: LevelItem }) {
                 <div className="header">
                     <img src={VizIcon} />
                 </div>
-                {rtState && <PuzzleVisualization state={rtState} />}
+                {rtState && <PuzzleVisualization state={rtState}/>}
             </div>
             <div className="output-container">
                 <div className="header">
