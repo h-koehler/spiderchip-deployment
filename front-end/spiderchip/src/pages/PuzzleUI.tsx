@@ -33,6 +33,8 @@ export default function PuzzleUI(props: { level: LevelItem }) {
     const [code, setCode] = useState<string>("");
     const [initialVars, setInitialVars] = useState<LT.CustomSlot[]>([]);
 
+    const [isAnimating, setIsAnimating] = useState(false);
+
     useEffect(() => {
         const handleKeypress = (event: KeyboardEvent) => {
             if (event.key === "Escape") {
@@ -225,20 +227,20 @@ export default function PuzzleUI(props: { level: LevelItem }) {
                         <img src={MenuIcon} />
                         Menu
                     </button>
-                    <button className="run-button" onClick={runCode}>
+                    <button className="run-button" onClick={runCode} disabled={isAnimating}>
                         <img src={PlayIcon} />
                         Run
                     </button>
-                    <button className="step-button" onClick={stepCode}>
+                    <button className="step-button" onClick={stepCode} disabled={isAnimating}>
                         <img src={StepIcon} />
                         Step
                     </button>
                     {/* TODO: show hints upon pressing this button */}
-                    <button className="hint-button">
+                    <button className="hint-button" disabled={isAnimating}>
                         <img src={HintIcon} />
                         Hint
                     </button>
-                    <button className="reset-button" onClick={resetCode}>
+                    <button className="reset-button" onClick={resetCode} disabled={isAnimating}>
                         <img src={ResetIcon} />
                         Reset
                     </button>
@@ -248,7 +250,7 @@ export default function PuzzleUI(props: { level: LevelItem }) {
                 <div className="header">
                     <img src={VizIcon} />
                 </div>
-                {rtState && <PuzzleVisualization state={rtState} animations={anims} />}
+                {rtState && <PuzzleVisualization state={rtState} animations={anims} setIsAnimating={setIsAnimating} />}
             </div>
             <div className="output-container">
                 <div className="header">

@@ -1,10 +1,17 @@
 .viz-container {
+    height: 100%;
+    overflow-y: auto;
+}
+
+.viz-inner {
     padding: 2em;
     display: flex;
     flex-direction: column;
     gap: 1em;
     align-items: center;
-    justify-content: center;
+    justify-content: flex-start;
+    height: 100%;
+    box-sizing: border-box;
 }
 
 .slot-grid {
@@ -50,4 +57,17 @@
     width: 100%;
     height: 100%;
     color: white;
+}
+
+.inputs-container {
+    margin-top: auto;
+    min-width: 10em;
+    height: 5em;
+    background: lightskyblue;
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: row;
+    gap: 1em;
+    align-items: center;
+    justify-content: center;
 }

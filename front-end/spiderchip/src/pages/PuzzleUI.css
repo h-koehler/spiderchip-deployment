@@ -2,7 +2,7 @@
     display: grid;
     grid-template-columns: repeat(7, 1fr);
     grid-template-rows: repeat(5, 1fr);
-    height: 100vh;
+    height: 100%;
 }
 
 .input-container {
@@ -48,6 +48,11 @@
     border: .2em solid black;
 }
 
+.action-buttons button:disabled {
+    cursor: wait; /* can be changed lol */
+    border: .2em solid black;
+}
+
 button.menu-button {
     background: #3a342c;
 }
@@ -60,7 +65,8 @@ button.run-button {
     background: #1ab90c;
 }
 
-button.run-button:hover {
+button.run-button:hover,
+button.run-button:disabled{
     background: #006408;
 }
 
@@ -68,7 +74,8 @@ button.step-button {
     background: #ff6400;
 }
 
-button.step-button:hover {
+button.step-button:hover,
+button.step-button:disabled{
     background: #bb4c03;
 }
 
@@ -76,7 +83,8 @@ button.hint-button {
     background: #3131fa;
 }
 
-button.hint-button:hover {
+button.hint-button:hover,
+button.hint-button:disabled{
     background: #0000d5;
 }
 
@@ -84,7 +92,8 @@ button.reset-button {
     background: #b80303;
 }
 
-button.reset-button:hover {
+button.reset-button:hover,
+button.reset-button:disabled{
     background: maroon;
 }
 
@@ -94,6 +103,8 @@ button img {
 }
 
 .visualization-container {
+    display: grid;
+    grid-template-rows: auto 1fr;
     grid-column: 4 / 8;
     grid-row: 1 / 4;
     border-top: .2em solid white;
@@ -101,6 +112,8 @@ button img {
     border-right: .2em solid black;
     border-bottom: .2em solid black;
     background: #E0E0E0;
+    min-height: 0;
+    height: 100%;
 }
 
 .output-container {
