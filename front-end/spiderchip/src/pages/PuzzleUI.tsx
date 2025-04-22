@@ -64,6 +64,8 @@ export default function PuzzleUI() {
     const savedCode = useRef<string>("");
     const [initialVars, setInitialVars] = useState<LT.CustomSlot[]>([]);
 
+    const [isAnimating, setIsAnimating] = useState(false);
+
     useEffect(() => {
         const handleKeypress = (event: KeyboardEvent) => {
             if (event.key === "Escape") {
