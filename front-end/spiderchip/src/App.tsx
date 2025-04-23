@@ -27,6 +27,7 @@ function App() {
                 <Route path='/game' element={<ProtectedRoute><Game/></ProtectedRoute>}/>
                 <Route path='/level-select' element={<LevelSelection />}/>
                 <Route path='/puzzle/:puzzleId' element={<PuzzleUI />} />
+                <Route path='/puzzle/' element={<Navigate to="/level-select" replace />} />
                 <Route path="/about" element={<About />} />
                 <Route path="/about/language" element={<LanguageExplanation />} />
             </Routes>
