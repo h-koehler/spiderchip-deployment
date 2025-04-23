@@ -593,7 +593,7 @@ function parseObjFunction(objname: string, parse: LineParse, result: PT.ParseRes
     }
     const keyObj = SUPPORTED_OBJS[dataObj.type as keyof typeof SUPPORTED_OBJS]; // dumb TS thing
     if (!Object.keys(keyObj).includes(parse.matched)) {
-        throw new Error(`Unrecognized function name '${parse.matched}' at position '${parse.pos}'.`);
+        throw new Error(`Unrecognized function name '${parse.matched}' at position '${parse.pos - parse.matched.length}'.`);
     }
     const fname = parse.matched;
     parse.match(RE_WS_OPT);

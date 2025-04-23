@@ -205,7 +205,7 @@ else:
 \`\`\`
 
 If x is 2, then the first block (\`output(x)\`) will run.
-However, if x is not 2, then the second block (\`output(y)\` will run instead.
+However, if x is not 2, then the second block (\`output(y)\`) will run instead.
 
 Blocks are allowed to contain other blocks inside them, for example:
 \`\`\`

@@ -8,7 +8,7 @@ import { CSSTransition } from "react-transition-group";
 import { setAuthToken } from "../services/api.ts";
 import { useNavigate } from "react-router-dom";
 
-export default function LevelSelection(props: { setSelectedLevel: (level: LevelItem | null) => void }) {
+export default function LevelSelection() {
     const [selectedLevel, setLocalSelectedLevel] = useState<LevelItem | null>(null);
     const [popupContentLevel, setPopUpContentLevel] = useState<LevelItem | null>(null);
     const [dropdownVisible, setDropdownVisible] = useState(false);
@@ -38,7 +38,6 @@ export default function LevelSelection(props: { setSelectedLevel: (level: LevelI
     const handleLevelSelect = (level: LevelItem) => {
         setPopUpContentLevel(level);
         setLocalSelectedLevel(level);
-        props.setSelectedLevel(level);
     }
 
     const updateLevelStatus = (levelId: number, newStatus: string) => {
@@ -55,6 +54,10 @@ export default function LevelSelection(props: { setSelectedLevel: (level: LevelI
 
     const handleHome = () => {
         navigate("/game");
+    }
+
+    const handleSandbox = () => {
+        navigate("/puzzle/sandbox");
     }
 
     const handleLogOut = () => {
@@ -93,7 +96,7 @@ export default function LevelSelection(props: { setSelectedLevel: (level: LevelI
                 {dropdownVisible && (
                     <ul className="dropdown-menu">
                         <li><button onClick={handleHome}>Home</button></li>
-                        <li><button>Settings</button></li>
+                        <li><button onClick={handleSandbox}>Sandbox</button></li>
                         <li><button onClick={handleLogOut}>Log Out</button></li>
                     </ul>
                 )}
@@ -120,14 +123,12 @@ export default function LevelSelection(props: { setSelectedLevel: (level: LevelI
                 nodeRef={popupRef}
                 onExited={() => {
                     setPopUpContentLevel(null);
-                    props.setSelectedLevel(null);
                 }}
             >
                 <div ref={popupRef} className={"popup-slide-wrapper"}>
                     {popupContentLevel && (
                     <PuzzleDetailPopUp
                         level={popupContentLevel}
-                        setSelectedLevel={setLocalSelectedLevel}
                         updateLevelStatus={updateLevelStatus}
                     />
                         )}

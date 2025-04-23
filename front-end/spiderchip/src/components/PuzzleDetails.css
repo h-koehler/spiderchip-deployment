@@ -1,19 +1,10 @@
 .details {
-    display: flex;
-    flex-direction: column;
-    gap: .5em;
-}
-
-.details h2 {
-    font-size: 2em;
-}
-
-.text {
-    max-height: 11vh;
+    height: 15vh;
     overflow: auto;
-    padding: .5em .75em;
+    padding: 0.5em 0.75em 0 0.5em;
+    font-size: 1.25em;
 }
 
-.text p {
-    font-size: 1.25em;
+.details > *:last-child {
+    margin-bottom: 0.5em;
 }

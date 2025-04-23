@@ -6,11 +6,8 @@ import {useEffect, useState} from "react";
 
 export default function PuzzleDetailsPopUp(props: {
     level: LevelItem,
-    setSelectedLevel: (level: LevelItem | null) => void,
     updateLevelStatus: (levelId: number, newStatus: string) => void
 }) {
-    if (!props.level) return null;
-
     const navigate = useNavigate();
     const [isChecked, setIsChecked] = useState(props.level.status === "skipped")
 
@@ -26,8 +23,7 @@ export default function PuzzleDetailsPopUp(props: {
     }
 
     const handleStartGame = () => {
-        props.setSelectedLevel(props.level);
-        navigate("/puzzle-ui");
+        navigate(`/puzzle/${props.level.id}`);
     }
 
     return (
