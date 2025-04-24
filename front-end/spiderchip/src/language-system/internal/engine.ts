@@ -509,7 +509,7 @@ export class ExecutionEngine {
         } else {
             if (funcname === "input") {
                 const v = this.inputs.shift();
-                if (!v) {
+                if (v === undefined) {
                     throw new BenignHalt("No inputs remaining.");
                 }
                 this.animations.push({ type: LT.SpiderAnimationType.INPUT, n: v });
@@ -540,14 +540,14 @@ export class ExecutionEngine {
         } else {
             if (obj.type === "cmd" && funcname === "next") {
                 const v = obj.contents.shift();
-                if (!v) {
+                if (v === undefined) {
                     throw new BenignHalt(`No next in ${obj.name}.`);
                 }
                 return v;
             } else if (obj.type === "stack") {
                 if (funcname === "pop") {
                     const v = obj.contents.pop();
-                    if (!v) {
+                    if (v === undefined) {
                         throw new Error(`${obj.name} is empty.`);
                     }
                     this.animations.push({ type: LT.SpiderAnimationType.OBJ_TAKE, object: objname, n: v, index: obj.contents.length });
@@ -560,7 +560,7 @@ export class ExecutionEngine {
             } else if (obj.type === "queue") {
                 if (funcname === "dequeue") {
                     const v = obj.contents.shift();
-                    if (!v) {
+                    if (v === undefined) {
                         throw new Error(`${obj.name} is empty.`);
                     }
                     this.animations.push({ type: LT.SpiderAnimationType.OBJ_TAKE, object: objname, n: v, index: 0 });

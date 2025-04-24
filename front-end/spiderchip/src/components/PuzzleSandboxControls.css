@@ -1,14 +1,3 @@
-.controls-container {
-    height: 15vh;
-    overflow: auto;
-    padding: 0.5em 0.75em 0 0.5em;
-    font-size: 1.25em;
-}
-
-.controls-container-big {
-    height: 50vh;
-}
-
 .controls-container > *:last-child {
     margin-bottom: 0.5em;
 }
@@ -44,4 +33,8 @@
     width: fit-content;
     margin-bottom: 0.2em;
     margin-right: 0.5em;
+}
+
+.sandbox-errors {
+    color: red;
 }

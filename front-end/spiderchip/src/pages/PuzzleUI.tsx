@@ -19,32 +19,11 @@ import ResetIcon from "../assets/images/reset-button-icon.svg";
 import createRuntime from "../language-system/ls-system.ts";
 import * as LT from "../language-system/ls-interface-types.ts";
 import { useNavigate, useParams } from "react-router-dom";
-import axios from "axios";
+import { getPuzzleDefinition } from "../components/PuzzleDefinitions.ts";
 
 const emptyLevel: LevelItem = { id: "unknown", title: "Unknown", description: "Something went wrong when loading the puzzle." };
 const emptyPuzzle = new LT.Puzzle(0, [new LT.PuzzleTest([], null, [], [])]);
 const sandboxLevel: LevelItem = { id: "sandbox", title: "Sandbox", description: "Create your own puzzle and experiment with the code!" };
-
-type FetchedTestCase = {
-    input: number[],
-    output: number[],
-    // these two get pulled into the below catch-all, so just leave them off
-    // slots?: number[],
-    // target?: number[],
-    [key: string]: number[]
-}
-
-type FetchedPuzzle = {
-    hints: string[],
-    objects: { [key: string]: string },
-    overview: string,
-    can_rename?: boolean;
-    slot_count: number,
-    slot_names: (string | null)[],
-    bonus_line_count: number,
-    target_line_count: number,
-    test_cases: FetchedTestCase[];
-}
 
 export default function PuzzleUI() {
     const { puzzleId } = useParams();
@@ -88,58 +67,50 @@ export default function PuzzleUI() {
             setLevel(sandboxLevel);
             setHints(["Sandbox puzzles do not have hints."]);
         } else {
-            axios.get(`/api/levels/${puzzleId}/testcase`)
-                .then((res) => {
-                    try {
-                        // TODO: the actual intended returned result is a bit more complicated, and will give us code
-                        const puzzleData: FetchedPuzzle = res.data;
-                        const puzzle = new LT.Puzzle(
-                            puzzleData.slot_count,
-                            puzzleData.test_cases.map((t: FetchedTestCase) =>
-                                new LT.PuzzleTest(
-                                    Object.keys(puzzleData.objects).map((o) =>
-                                        new LT.SpiderObject(puzzleData.objects[o], o, t?.[o] ?? [])
-                                    ),
-                                    t.slots ?? null,
-                                    t.input,
-                                    t.output,
-                                    t.target ?? null
-                                )
+            const puzzleDefinition = getPuzzleDefinition(Number.parseInt(puzzleId ?? "-1"));
+            if (puzzleDefinition) {
+                const puzzleData = puzzleDefinition.data;
+                const puzzle = new LT.Puzzle(
+                    puzzleData.slot_count,
+                    puzzleData.test_cases.map((t) =>
+                        new LT.PuzzleTest(
+                            Object.keys(puzzleData.objects).map((o) =>
+                                new LT.SpiderObject(puzzleData.objects[o], o, t?.[o] ?? [])
                             ),
-                            puzzleData.slot_names ?? null,
-                            puzzleData.test_cases[0].target ? false : true, // if test cases are defining targets, no editing
-                            puzzleData.can_rename ?? true,
+                            t.slots ?? null,
+                            t.input,
+                            t.output,
+                            t.target ?? null
                         )
-                        // TODO: fill this in properly
-                        const level: LevelItem = {
-                            id: puzzleId ?? "UNKNOWN",
-                            title: "UNKNOWN",
-                            description: "UNKNOWN"
-                        }
-                        setLevel(level);
-                        setHints(puzzleData.hints);
-                        const vars = puzzle.defaultSlotNames?.map(
-                            (name, i) => new LT.CustomSlot(i, name ?? undefined, 0)
-                        ) ?? [];
-                        setInitialVars(vars);
+                    ),
+                    puzzleData.slot_names ?? null,
+                    puzzleData.test_cases[0].target ? false : true, // if test cases are defining targets, no editing
+                    puzzleData.can_rename ?? true,
+                )
+                const level: LevelItem = {
+                    id: puzzleId ?? "Unknown",
+                    title: puzzleDefinition.title,
+                    description: puzzleData.overview
+                }
+                setLevel(level);
+                setHints(puzzleData.hints);
+                const vars = puzzle.defaultSlotNames?.map(
+                    (name, i) => new LT.CustomSlot(i, name ?? undefined, 0)
+                ) ?? [];
+                setInitialVars(vars);
 
-                        const chosenCase = Math.floor(Math.random() * puzzle.testCases.length);
-                        setCaseNum(chosenCase);
+                const chosenCase = Math.floor(Math.random() * puzzle.testCases.length);
+                setCaseNum(chosenCase);
+                runtime.current = createRuntime(puzzle);
+                runtime.current.init("", vars, chosenCase);
+                setRtState(runtime.current.state());
 
-                        runtime.current = createRuntime(puzzle);
-                        runtime.current.init("", vars, chosenCase);
-                        setRtState(runtime.current.state());
-
-                        // TODO: use THEIR code, this as a fallback
-                        setCode("");
-                        setSavedCode("");
-                    } catch (e) {
-                        console.error("Failed to decode puzzle data:", e);
-                    }
-                })
-                .catch((err) => {
-                    console.error("Failed to fetch puzzle data:", err);
-                });
+                // TODO: use THEIR code, this as a fallback
+                setCode("");
+                setSavedCode("");
+            } else {
+                console.log("Could not find puzzle.");
+            }
         }
         setLoading(false);
     }, [puzzleId]);
@@ -147,7 +118,7 @@ export default function PuzzleUI() {
     const saveProgress = useCallback(() => {
         // don't save anything in the sandbox, and abort if we know they've saved this already
         if (puzzleId !== "sandbox" && code !== savedCode) {
-            console.log("Saving code...");
+            console.log("Saving puzzle progress...");
             // TODO: save the code and progress for the current puzzle id
             setSavedCode(code);
         }
@@ -319,8 +290,8 @@ export default function PuzzleUI() {
                 {showHints &&
                     <div className="hint-container">
                         <div>
-                            <h4>Hint {currentHint + 1}</h4>
-                            <p>{hints[currentHint]}</p>
+                            <p className="hint-title">Hint {currentHint + 1}</p>
+                            <p className="hint-text">{hints[currentHint]}</p>
                         </div>
                         <div className="hint-spacing"></div>
                         <button className="prev-hint-button" onClick={() => setCurrentHint(currentHint - 1)} disabled={currentHint <= 0}>
@@ -370,15 +341,14 @@ export default function PuzzleUI() {
                 <div className="header">
                     <img src={DetailsIcon} />
                     <h2>{level.title}</h2>
-                    {puzzleId === "sandbox" &&
-                        <button className="primary-button small-button"
-                            onClick={() => setBigDetails(!bigDetails)}>
-                            {bigDetails ? "Shrink" : "Enlarge"}
-                        </button>}
+                    <button className="primary-button small-button"
+                        onClick={() => setBigDetails(!bigDetails)}>
+                        {bigDetails ? "Shrink" : "Enlarge"}
+                    </button>
                 </div>
                 {puzzleId === "sandbox" ?
-                    <PuzzleSandboxControls big={bigDetails} onApply={updateSandboxPuzzle} /> :
-                    <PuzzleDetails level={level} />}
+                    <PuzzleSandboxControls extraClass={bigDetails ? "big-details" : ""} onApply={updateSandboxPuzzle} /> :
+                    <PuzzleDetails extraClass={bigDetails ? "big-details" : ""} level={level} />}
             </div>
 
             {menuIsOpen && <PuzzlePauseMenu onResume={() => toggleMenu()} onQuit={() => menuClickedQuit()} />}

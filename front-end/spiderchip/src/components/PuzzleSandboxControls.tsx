@@ -12,7 +12,7 @@ type ObjectSetup = {
     values: number[];
 }
 
-export default function PuzzleSandboxControls(props: { big: boolean, onApply: (p: Puzzle) => void }) {
+export default function PuzzleSandboxControls(props: { extraClass?: string, onApply: (p: Puzzle) => void }) {
     const [errorMsg, setErrorMsg] = useState("");
 
     const [slotCount, setSlotCount] = useState(6);
@@ -185,12 +185,12 @@ export default function PuzzleSandboxControls(props: { big: boolean, onApply: (p
         objects.forEach((o, i) => {
             if (!o.name.match(RE_IDENTIFIER)) {
                 error = `Invalid object name '${o.name || "(empty)"}'`;
-            } else if (!o.type) {
-                error = `Missing object type on '${o.name}'`;
             } else if (objects.some((other, io) => i != io && other.name === o.name)) {
                 error = `Duplicate object name '${o.name}'`;
             } else if (slotNames.some((other) => o.name === other)) {
                 error = `Object '${o.name}' has same name as a slot`;
+            } else if (!o.type) {
+                error = `Missing object type on '${o.name}'`;
             }
         });
 
@@ -222,47 +222,51 @@ export default function PuzzleSandboxControls(props: { big: boolean, onApply: (p
     }, []);
 
     return (
-        <div className={"controls-container" + (props.big ? " controls-container-big" : "")}>
+        <div className={"controls-container " + (props.extraClass ?? "")}>
             <div className="controls">
                 <div className="slots">
                     <div className="control-line">
                         <p>Number of slots:</p>
                         <input type="number" value={slotCount} onChange={changeSlotCount} />
                     </div>
-                    <div className="control-line">
-                        <p>Slot values:</p>
-                        {slotValues.map((v, i) =>
-                            <input key={i} type="number" value={v} onChange={(e) => changeSlotValue(e.target.value, i)} />
-                        )}
-                    </div>
-                    <div className="control-line">
-                        <p>Slot names:</p>
-                        {slotNames.map((n, i) =>
-                            <input key={i} type="text" value={n} onChange={(e) => changeSlotName(e.target.value, i)} />
-                        )}
-                    </div>
+                    {slotCount > 0 && <>
+                        <div className="control-line">
+                            <p>Slot values:</p>
+                            {slotValues.map((v, i) =>
+                                <input key={i} type="number" value={v} onChange={(e) => changeSlotValue(e.target.value, i)} />
+                            )}
+                        </div>
+                        <div className="control-line">
+                            <p>Slot names:</p>
+                            {slotNames.map((n, i) =>
+                                <input key={i} type="text" value={n} onChange={(e) => changeSlotName(e.target.value, i)} />
+                            )}
+                        </div>
+                    </>}
                 </div>
-                <div className="input-output">
+                <div className="inputs">
                     <div className="control-line">
                         <p>Input count:</p>
                         <input type="number" value={inputCount} onChange={changeInputCount} />
                     </div>
-                    <div className="control-line">
+                    {inputValues.length > 0 && <div className="control-line">
                         <p>Inputs:</p>
                         {inputValues.map((v, i) =>
                             <input key={i} type="number" value={v} onChange={(e) => changeInput(e.target.value, i)} />
                         )}
-                    </div>
+                    </div>}
+                </div>
+                <div className="outputs">
                     <div className="control-line">
-                        <p>Output count:</p>
+                        <p>Expected output count:</p>
                         <input type="number" value={outputCount} onChange={changeOutputCount} />
                     </div>
-                    <div className="control-line">
-                        <p>Outputs:</p>
+                    {outputValues.length > 0 && <div className="control-line">
+                        <p>Expected outputs:</p>
                         {outputValues.map((v, i) =>
                             <input key={i} type="number" value={v} onChange={(e) => changeOutput(e.target.value, i)} />
                         )}
-                    </div>
+                    </div>}
                 </div>
                 <div className="objects">
                     <button className="primary-button tiny-button" onClick={addObject}>Add Object</button>
@@ -276,7 +280,7 @@ export default function PuzzleSandboxControls(props: { big: boolean, onApply: (p
                         </select>
                         <p>Name:</p>
                         <input type="text" value={o.name} onChange={(e) => setObjectName(i, e.target.value)} />
-                        <p>Contents Size:</p>
+                        <p>Contents size:</p>
                         <input type="number" value={o.values.length} onChange={(e) => setObjectContentCount(i, e.target.value)} />
                         {o.values.length > 0 && <p>Contents:</p>}
                         {o.values.map((v, vi) =>
@@ -284,7 +288,7 @@ export default function PuzzleSandboxControls(props: { big: boolean, onApply: (p
                         )}
                     </div>)}
                 </div>
-                {errorMsg && <div className="errors">
+                {errorMsg && <div className="sandbox-errors">
                     <p>{errorMsg}</p>
                 </div>}
                 <button className="primary-button small-button" onClick={sendChanges}>Apply Puzzle</button>

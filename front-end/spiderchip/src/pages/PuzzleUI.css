@@ -34,7 +34,11 @@
     gap: 0.5em;
 }
 
-.hint-container h4 {
+.hint-container .hint-title {
+    font-size: 1em;
+}
+
+.hint-container .hint-text {
     font-size: 1.25em;
 }
 
@@ -51,6 +55,9 @@
     background: #3131fa;
     border: .2em solid transparent;
     border-radius: 5px;
+    padding: 0.5em 0.5em;
+    height: min-content;
+    align-self: end;
 }
 
 .hint-container button:hover:not(:disabled) {
@@ -166,6 +173,17 @@ button img {
     border-right: .2em solid black;
     border-bottom: .2em solid black;
     background: #E0E0E0;
+}
+
+.details-container > *:not(.header) {
+    height: 15vh;
+    overflow: auto;
+    padding: 0.5em 0.75em 0 0.5em;
+    font-size: 1.25em;
+}
+
+.details-container > .big-details:not(.header) {
+    height: 50vh;
 }
 
 .header {
