@@ -20,6 +20,7 @@ import createRuntime from "../language-system/ls-system.ts";
 import * as LT from "../language-system/ls-interface-types.ts";
 import { useNavigate, useParams } from "react-router-dom";
 import { getPuzzleDefinition } from "../components/PuzzleDefinitions.ts";
+import DebugPuzzleVisualization from "../components/DebugPuzzleVisualization.tsx";
 
 type LevelInfo = {
     id: string | number;
@@ -52,6 +53,7 @@ export default function PuzzleUI() {
 
     const [menuIsOpen, setMenuIsOpen] = useState(false);
     const [bigDetails, setBigDetails] = useState(false);
+    const [debugVis, setDebugVis] = useState(false);
 
     const [code, setCode] = useState<string>("");
     const [savedCode, setSavedCode] = useState<string>("");
@@ -334,8 +336,13 @@ export default function PuzzleUI() {
             <div className="visualization-container">
                 <div className="header">
                     <img src={VizIcon} />
+                    <button className="primary-button small-button"
+                        onClick={() => setDebugVis(!debugVis)}>
+                        {debugVis ? "Use Animated View" : "Use Clean View"}
+                    </button>
                 </div>
-                {rtState && <PuzzleVisualization state={rtState} animations={anims} />}
+                {rtState && !debugVis && <PuzzleVisualization state={rtState} animations={anims} />}
+                {rtState && debugVis && <DebugPuzzleVisualization state={rtState} />}
             </div>
             <div className="output-container">
                 <div className="header">
@@ -354,7 +361,7 @@ export default function PuzzleUI() {
                 </div>
                 {puzzleId === "sandbox" ?
                     <PuzzleSandboxControls extraClass={bigDetails ? "big-details" : ""} onApply={updateSandboxPuzzle} /> :
-                    <PuzzleDetails extraClass={bigDetails ? "big-details" : ""} level={level} />}
+                    <PuzzleDetails extraClass={bigDetails ? "big-details" : ""} description={level.description} />}
             </div>
 
             {menuIsOpen && <PuzzlePauseMenu onResume={() => toggleMenu()} onQuit={() => menuClickedQuit()} />}

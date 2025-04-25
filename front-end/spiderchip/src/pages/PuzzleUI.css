@@ -153,6 +153,8 @@ button img {
     border-right: .2em solid black;
     border-bottom: .2em solid black;
     background: #E0E0E0;
+    display: flex;
+    flex-direction: column;
 }
 
 .output-container {

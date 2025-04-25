@@ -1,0 +1,25 @@
+.debug-viz {
+    padding: 1em;
+    overflow: auto;
+}
+
+.debug-viz h3 {
+    font-size: 2em;
+}
+
+.debug-viz h3:not(:first-child) {
+    margin-top: 1em;
+}
+
+.debug-viz p {
+    font-size: 1.25em;
+}
+
+.debug-viz table {
+    border-spacing: 1em 0.15em;
+    margin-left: -1em;
+}
+
+.slot-visualizer p {
+    text-align: center;
+}
