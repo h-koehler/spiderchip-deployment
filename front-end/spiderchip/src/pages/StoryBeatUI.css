@@ -1,0 +1,42 @@
+.dialogue-container button {
+    white-space: nowrap;
+    width: min-content;
+    align-self: end;
+}
+
+.story-no-letterhead-icon {
+    width: 15%;
+    margin: 2em auto;
+}
+
+.story-letterhead {
+    display: flex;
+    margin-bottom: 1em;
+}
+
+.story-letterhead img {
+    width: 70px;
+    margin-right: 1em;
+}
+
+.story-letterhead-info {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.story-letterhead-info h1 {
+    line-height: 1;
+    font-size: 40px;
+    margin: 0;
+}
+
+.story-letterhead-info h3 {
+    line-height: 1;
+    font-size: 20px;
+    margin: 0;
+}
+
+.story-spacer {
+    flex: 1 1 0;
+}

@@ -3,10 +3,9 @@ import Home from './pages/Home';
 import Game from './pages/Game';
 import LevelSelection from "./pages/LevelSelection.tsx";
 import PuzzleUI from "./pages/PuzzleUI.tsx";
-import { LevelItem } from "./types.ts";
-import { useState } from "react";
 import About from './pages/About';
 import LanguageExplanation from './pages/LanguageExplanation.tsx';
+import StoryBeatUI from './pages/StoryBeatUI.tsx';
 
 const isAuthenticated = () => {
     return !!localStorage.getItem("token");
@@ -22,15 +21,16 @@ const PublicRoute = ({children}: { children: JSX.Element }) => {
 };
 
 function App() {
-    const [selectedLevel, setSelectedLevel] = useState<LevelItem | null>(null);
-
     return (
         <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
             <Routes>
                 <Route path='/' element={<Home/>}/>
                 <Route path='/game' element={<ProtectedRoute><Game/></ProtectedRoute>}/>
-                <Route path='/level-select' element={<LevelSelection setSelectedLevel={setSelectedLevel}/>}/>
-                <Route path='/puzzle-ui' element={selectedLevel ? <PuzzleUI level={selectedLevel}/> : <Navigate to="/level-select" replace />} />
+                <Route path='/level-select' element={<LevelSelection />}/>
+                <Route path='/puzzle/:puzzleId' element={<PuzzleUI />} />
+                <Route path='/puzzle/' element={<Navigate to="/level-select" replace />} />
+                <Route path='/story/:storyId' element={<StoryBeatUI />} />
+                <Route path='/story/' element={<Navigate to="/level-select" replace />} />
                 <Route path="/about" element={<About />} />
                 <Route path="/about/language" element={<LanguageExplanation />} />
             </Routes>

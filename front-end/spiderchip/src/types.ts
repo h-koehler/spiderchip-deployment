@@ -1,9 +1,7 @@
 export interface LevelItem {
-    id: number;
+    id: number | string;
     title: string;
-    category: string;
     description: string;
-    status: any;
 }
 
 export enum LineHighlightType {

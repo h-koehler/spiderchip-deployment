@@ -33,7 +33,7 @@ describe('App Routing', () => {
   });
 
   test('redirects from "/puzzle-ui" to "/level-select" if no level is selected', () => {
-    window.history.pushState({}, 'Test page', '/puzzle-ui');
+    window.history.pushState({}, 'Test page', '/puzzle/');
     render(<App />);
     // Expect redirection to LevelSelection since no level is selected
     expect(screen.getByText('Level Selection Page')).toBeInTheDocument();
