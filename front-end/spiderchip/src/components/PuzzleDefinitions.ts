@@ -480,7 +480,7 @@ const levels: PuzzleDefinition[] = [
             target_line_count: 25
         }
     }
-]
+];
 
 export type PuzzleDataTestCase = {
     input: number[],

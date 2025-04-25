@@ -1,0 +1,48 @@
+.dialogue-page {
+    display: flex;
+    position: absolute;
+    width: 100%;
+    min-height: 30vh;
+    bottom: 0;
+}
+
+.dialogue-container {
+	display: flex;
+    flex: 1 0 0;
+    gap: 0.5em;
+	flex-direction: column;
+    max-width: 800px;
+    padding: 1em;
+    margin: 0 auto;
+}
+
+.dialogue-speaker {
+    font-size: 1.5em;
+    margin-left: 2em;
+}
+
+.dialogue-content {
+    flex: 1 0 0;
+    position: relative;
+    padding: 1em;
+    font-size: 1.75em;
+    border-radius: 20px;
+    background-color: var(--secondary-background-color);
+    border-top: 4px solid #E0E0E0;
+    border-left: 4px solid #E0E0E0;
+    border-right: 4px solid #808080;
+    border-bottom: 4px solid #808080;
+}
+
+.dialogue-clickable {
+    cursor: pointer;
+}
+
+.dialogue-next-icon {
+    position: absolute;
+    right: 20px;
+    bottom: 14px;
+    width: 32px;
+    height: 32px;
+}
+
