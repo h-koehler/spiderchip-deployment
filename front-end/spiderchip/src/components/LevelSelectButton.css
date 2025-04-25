@@ -36,7 +36,17 @@ button.level-button {
 }
 
 button.level-button:disabled {
-    cursor: default;
+    cursor: unset;
+}
+
+.level-button h2 {
+    font-size: 2.5em;
+    white-space: wrap;
+}
+
+.level-button h3 {
+    font-size: 2em;
+    white-space: wrap;
 }
 
 .status-icon {

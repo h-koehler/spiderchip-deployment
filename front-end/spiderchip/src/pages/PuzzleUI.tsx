@@ -1,4 +1,4 @@
-import { LevelItem, LineHighlight, LineHighlightType } from "../types.ts";
+import { LineHighlight, LineHighlightType } from "../types.ts";
 import PuzzleVisualization from "../components/PuzzleVisualization.tsx";
 import PuzzleInput from "../components/PuzzleInput.tsx";
 import PuzzleOutput from "../components/PuzzleOutput.tsx";
@@ -21,16 +21,22 @@ import * as LT from "../language-system/ls-interface-types.ts";
 import { useNavigate, useParams } from "react-router-dom";
 import { getPuzzleDefinition } from "../components/PuzzleDefinitions.ts";
 
-const emptyLevel: LevelItem = { id: "unknown", title: "Unknown", description: "Something went wrong when loading the puzzle." };
+type LevelInfo = {
+    id: string | number;
+    title: string;
+    description: string;
+}
+
+const emptyLevel: LevelInfo = { id: "unknown", title: "Unknown", description: "Something went wrong when loading the puzzle." };
 const emptyPuzzle = new LT.Puzzle(0, [new LT.PuzzleTest([], null, [], [])]);
-const sandboxLevel: LevelItem = { id: "sandbox", title: "Sandbox", description: "Create your own puzzle and experiment with the code!" };
+const sandboxLevel: LevelInfo = { id: "sandbox", title: "Sandbox", description: "Create your own puzzle and experiment with the code!" };
 
 export default function PuzzleUI() {
     const { puzzleId } = useParams();
     const navigate = useNavigate();
 
     const [loading, setLoading] = useState(true);
-    const [level, setLevel] = useState<LevelItem>(emptyLevel);
+    const [level, setLevel] = useState<LevelInfo>(emptyLevel);
 
     const [hints, setHints] = useState<string[]>([]);
     const [showHints, setShowHints] = useState(false);
@@ -87,8 +93,8 @@ export default function PuzzleUI() {
                     puzzleData.test_cases[0].target ? false : true, // if test cases are defining targets, no editing
                     puzzleData.can_rename ?? true,
                 )
-                const level: LevelItem = {
-                    id: puzzleId ?? "Unknown",
+                const level: LevelInfo = {
+                    id: puzzleId ?? "unknown",
                     title: puzzleDefinition.title,
                     description: puzzleData.overview
                 }

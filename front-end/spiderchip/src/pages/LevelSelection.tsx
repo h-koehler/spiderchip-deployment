@@ -1,35 +1,42 @@
 import LevelSelectButton from "../components/LevelSelectButton.tsx"
-import PuzzleDetailPopUp from "../components/PuzzleDetailPopUp.tsx";
-import {LevelItem} from "../types.ts"
+import PuzzleDetailPopUp from "../components/LevelDetailPopUp.tsx";
+import { compareLevelItems, getUniqueLevelItemKey, LevelItem, LevelItemType, LevelStatus } from "../types.ts"
 import GearIcon from "../assets/images/gear-icon.svg"
 import "./LevelSelection.css"
-import {useEffect, useRef, useState} from "react";
+import { useEffect, useRef, useState } from "react";
 import { CSSTransition } from "react-transition-group";
 import { setAuthToken } from "../services/api.ts";
 import { useNavigate } from "react-router-dom";
+import { getAllPuzzles } from "../components/PuzzleDefinitions.ts";
+import { useHorizontalScroll } from "../utils/useHorizontalScroll.tsx";
+import { getAllStoryBeats } from "../components/StoryDefinitions.ts";
 
 export default function LevelSelection() {
     const [selectedLevel, setLocalSelectedLevel] = useState<LevelItem | null>(null);
     const [popupContentLevel, setPopUpContentLevel] = useState<LevelItem | null>(null);
     const [dropdownVisible, setDropdownVisible] = useState(false);
+    const scrollRef = useHorizontalScroll<HTMLDivElement>();
     const navigate = useNavigate();
     const popupRef = useRef<HTMLDivElement>(null);
 
-    const [levelList, setLevelList] = useState<LevelItem[]>([
-        {id: 1, title: "Level 1", category: "Category 1", description: "Description 1", status: "completed"},
-        {id: 2, title: "Level 2", category: "Category 2", description: "Description 2", status: "skipped"},
-        {id: 3, title: "Level 3", category: "Category 3", description: "Description 3", status: "available"},
-        {id: 4, title: "Level 4", category: "Category 4", description: "Description 4", status: "not-available"},
-    ]);
-
-    // TODO: implement to retrieve list of levels instead of static list
-    // useEffect(() => {
-    //     const fetchLevels = async() => {
-    //         try {
-    //             const response = await fetch("api/users/level")
-    //         }
-    //     }
-    // })
+    const originalLevels: LevelItem[] = getAllPuzzles().map((p) => {
+        // TODO: pull the puzzle status from user save data
+        return { type: LevelItemType.PUZZLE, id: p.puzzle_number, title: p.title, description: p.description, status: LevelStatus.AVAILABLE }
+    });
+    const originalStories: LevelItem[] = getAllStoryBeats().map((s) => {
+        return { type: LevelItemType.STORY, id: s.story_number, level: s.associated_puzzle, storyType: s.type, description: s.description, status: LevelStatus.AVAILABLE }
+    });
+    const originalAllItems = [...originalLevels, ...originalStories].sort(compareLevelItems);
+    originalAllItems.forEach((l) => {
+        // story elements after incomplete puzzles get locked
+        if (l.type === LevelItemType.STORY) {
+            const associatedLevel = originalLevels.find((puzzle) => puzzle.id === l.level);
+            if (associatedLevel && !(associatedLevel.status === LevelStatus.SKIPPED || associatedLevel.status === LevelStatus.COMPLETED)) {
+                l.status = LevelStatus.LOCKED;
+            }
+        }
+    })
+    const [levelList, setLevelList] = useState<LevelItem[]>(originalAllItems);
 
     const toggleDropdown = () => {
         setDropdownVisible(!dropdownVisible)
@@ -40,16 +47,30 @@ export default function LevelSelection() {
         setLocalSelectedLevel(level);
     }
 
-    const updateLevelStatus = (levelId: number, newStatus: string) => {
-        setLevelList(prevLevels =>
-            prevLevels.map(level =>
-                level.id === levelId ? {...level, status: newStatus} : level
-            )
-        );
+    const updateLevelStatus = (level: LevelItem, newStatus: LevelStatus) => {
+        setLevelList((prevLevels) => {
+            const updatedLevels = prevLevels.map((l) => {
+                if (l === level) {
+                    const modifiedLevel = { ...l, status: newStatus };
+                    setLocalSelectedLevel(modifiedLevel);
+                    return modifiedLevel;
+                } else if (newStatus !== LevelStatus.LOCKED) {
+                    // unlock the stuff after it
+                    if (l.type === LevelItemType.STORY && l.level == level.id) {
+                        return { ...l, status: LevelStatus.AVAILABLE };
+                    } else if (l.type === LevelItemType.PUZZLE && l.id === level.id + 1) {
+                        return { ...l, status: LevelStatus.AVAILABLE };
+                    } else {
+                        return l;
+                    }
+                } else {
+                    return l;
+                }
+            });
+            // TODO: propagate the status changes to user save storage (updatedLevels is correct here)
+            return updatedLevels;
+        });
 
-        setLocalSelectedLevel(prevLevel =>
-            prevLevel && prevLevel.id === levelId ? {...prevLevel, status: newStatus} : prevLevel
-        )
     };
 
     const handleHome = () => {
@@ -61,9 +82,9 @@ export default function LevelSelection() {
     }
 
     const handleLogOut = () => {
-            setAuthToken(null);
-            localStorage.removeItem("token");
-            navigate("/");
+        setAuthToken(null);
+        localStorage.removeItem("token");
+        navigate("/");
     }
 
     useEffect(() => {
@@ -91,7 +112,7 @@ export default function LevelSelection() {
         <div className="level-selection-container">
             <div className="settings-dropdown">
                 <button onClick={toggleDropdown}>
-                    <img src={GearIcon}/>
+                    <img src={GearIcon} />
                 </button>
                 {dropdownVisible && (
                     <ul className="dropdown-menu">
@@ -101,15 +122,14 @@ export default function LevelSelection() {
                     </ul>
                 )}
             </div>
-            <div className="scroll-container">
+            <div className="scroll-container" ref={scrollRef}>
                 <ul>
                     {levelList.map(level => (
                         <LevelSelectButton
-                            key={level.id}
+                            key={getUniqueLevelItemKey(level)}
                             level={level}
-                            isActive={selectedLevel?.id === level.id}
-                            setSelectedLevel={handleLevelSelect}
-                            updateLevelStatus={updateLevelStatus}
+                            isActive={level === selectedLevel}
+                            onClick={handleLevelSelect}
                         />
                     ))}
                 </ul>
@@ -127,11 +147,11 @@ export default function LevelSelection() {
             >
                 <div ref={popupRef} className={"popup-slide-wrapper"}>
                     {popupContentLevel && (
-                    <PuzzleDetailPopUp
-                        level={popupContentLevel}
-                        updateLevelStatus={updateLevelStatus}
-                    />
-                        )}
+                        <PuzzleDetailPopUp
+                            level={popupContentLevel}
+                            updateLevelStatus={updateLevelStatus}
+                        />
+                    )}
                 </div>
             </CSSTransition>
         </div>
