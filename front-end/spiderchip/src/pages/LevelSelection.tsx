@@ -5,38 +5,62 @@ import GearIcon from "../assets/images/gear-icon.svg"
 import "./LevelSelection.css"
 import { useEffect, useRef, useState } from "react";
 import { CSSTransition } from "react-transition-group";
-import { setAuthToken } from "../services/api.ts";
+import api, { getCurrentUserId, setAuthToken } from "../services/api.ts";
 import { useNavigate } from "react-router-dom";
 import { getAllPuzzles } from "../components/PuzzleDefinitions.ts";
 import { useHorizontalScroll } from "../utils/useHorizontalScroll.tsx";
 import { getAllStoryBeats } from "../components/StoryDefinitions.ts";
 
+type LevelStatusDict = {
+    levelId: number,
+    status: LevelStatus
+}
+
 export default function LevelSelection() {
+    const [levelList, setLevelList] = useState<LevelItem[]>([]);
     const [selectedLevel, setLocalSelectedLevel] = useState<LevelItem | null>(null);
     const [popupContentLevel, setPopUpContentLevel] = useState<LevelItem | null>(null);
     const [dropdownVisible, setDropdownVisible] = useState(false);
-    const scrollRef = useHorizontalScroll<HTMLDivElement>();
     const navigate = useNavigate();
+    const scrollRef = useHorizontalScroll<HTMLDivElement>();
     const popupRef = useRef<HTMLDivElement>(null);
 
-    const originalLevels: LevelItem[] = getAllPuzzles().map((p) => {
-        // TODO: pull the puzzle status from user save data
-        return { type: LevelItemType.PUZZLE, id: p.puzzle_number, title: p.title, description: p.description, status: LevelStatus.AVAILABLE }
-    });
-    const originalStories: LevelItem[] = getAllStoryBeats().map((s) => {
-        return { type: LevelItemType.STORY, id: s.story_number, level: s.associated_puzzle, storyType: s.type, description: s.description, status: LevelStatus.AVAILABLE }
-    });
-    const originalAllItems = [...originalLevels, ...originalStories].sort(compareLevelItems);
-    originalAllItems.forEach((l) => {
-        // story elements after incomplete puzzles get locked
-        if (l.type === LevelItemType.STORY) {
-            const associatedLevel = originalLevels.find((puzzle) => puzzle.id === l.level);
-            if (associatedLevel && !(associatedLevel.status === LevelStatus.SKIPPED || associatedLevel.status === LevelStatus.COMPLETED)) {
-                l.status = LevelStatus.LOCKED;
-            }
-        }
-    })
-    const [levelList, setLevelList] = useState<LevelItem[]>(originalAllItems);
+    useEffect(() => {
+        const userId = getCurrentUserId();
+        const originalLevels: LevelItem[] = getAllPuzzles().map((p) => {
+            return { type: LevelItemType.PUZZLE, id: p.puzzle_number, title: p.title, description: p.description, status: p.puzzle_number === 1 ? LevelStatus.AVAILABLE : LevelStatus.LOCKED }
+        });
+        const originalStories: LevelItem[] = getAllStoryBeats().map((s) => {
+            return { type: LevelItemType.STORY, id: s.story_number, level: s.associated_puzzle, storyType: s.type, description: s.description, status: LevelStatus.AVAILABLE }
+        });
+        api.get(`/levels/all/${userId}`)
+            .then((response: { data: LevelStatusDict[] }) => {
+                // the data tells us each level's status
+                response.data.forEach((stat: LevelStatusDict) => {
+                    const trueLevel = originalLevels.find((tl) => tl.id === stat.levelId);
+                    if (trueLevel) {
+                        trueLevel.status = stat.status;
+                    }
+                });
+            })
+            .catch(() => {
+                console.log("Failed to pull save data.");
+            })
+            .finally(() => {
+                // always want to show the levels
+                const originalAllItems = [...originalLevels, ...originalStories].sort(compareLevelItems);
+                originalAllItems.forEach((l) => {
+                    // story elements after incomplete puzzles get locked
+                    if (l.type === LevelItemType.STORY) {
+                        const associatedLevel = originalLevels.find((puzzle) => puzzle.id === l.level);
+                        if (associatedLevel && !(associatedLevel.status === LevelStatus.SKIPPED || associatedLevel.status === LevelStatus.COMPLETED)) {
+                            l.status = LevelStatus.LOCKED;
+                        }
+                    }
+                })
+                setLevelList(originalAllItems);
+            })
+    }, []);
 
     const toggleDropdown = () => {
         setDropdownVisible(!dropdownVisible)
@@ -67,10 +91,16 @@ export default function LevelSelection() {
                     return l;
                 }
             });
-            // TODO: propagate the status changes to user save storage (updatedLevels is correct here)
+            const userId = getCurrentUserId();
+            api.post(`/levels/all/${userId}`,
+                updatedLevels
+                    .filter((l) => l.type === LevelItemType.PUZZLE)
+                    .map((l) => { return { levelId: l.id, status: l.status } })
+            ).catch(() => {
+                console.log("Failed to save level status changes.");
+            });
             return updatedLevels;
         });
-
     };
 
     const handleHome = () => {
@@ -83,7 +113,6 @@ export default function LevelSelection() {
 
     const handleLogOut = () => {
         setAuthToken(null);
-        localStorage.removeItem("token");
         navigate("/");
     }
 

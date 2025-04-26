@@ -44,7 +44,7 @@ describe('Home Component', () => {
   });
 
   test('clicking START with a token navigates to /game', () => {
-    localStorage.setItem('token', 'dummy-token');
+    localStorage.setItem('auth-user-token', 'dummy-token');
     render(
       <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
         <Home />

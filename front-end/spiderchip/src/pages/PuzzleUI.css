@@ -26,7 +26,7 @@
     overflow: hidden;
 }
 
-.hint-container {
+.puzzle-messages-container {
     background: var(--secondary-background-color);
     color: var(--default-text-color);
     padding: 1em 1em 1em 0.5em;
@@ -34,23 +34,28 @@
     gap: 0.5em;
 }
 
-.hint-container .hint-title {
+.puzzle-message {
+    align-self: center;
+    height: min-content;
+}
+
+.puzzle-messages-container .title {
     font-size: 1em;
 }
 
-.hint-container .hint-text {
+.puzzle-messages-container .text {
     font-size: 1.25em;
 }
 
-.hint-spacing {
+.puzzle-messages-container .spacing {
     flex: 1 1 0;
 }
 
-.hint-container button:disabled {
+.hint-cycle-button:disabled {
     background: #7171ff;
 }
 
-.hint-container button {
+.hint-cycle-button {
     box-sizing: border-box;
     background: #3131fa;
     border: .2em solid transparent;
@@ -60,13 +65,17 @@
     align-self: end;
 }
 
-.hint-container button:hover:not(:disabled) {
+.hint-cycle-button:hover:not(:disabled) {
     cursor: pointer;
     background: #0000d5;
 }
 
-.prev-hint-button {
+.hint-cycle-button.prev-hint {
     transform: scaleX(-1);
+}
+
+.success-container {
+    background: #95f88c;
 }
 
 .action-buttons {

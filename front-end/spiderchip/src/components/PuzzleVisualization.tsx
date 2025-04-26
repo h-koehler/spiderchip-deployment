@@ -47,7 +47,6 @@ export default function PuzzleVisualization(props: { state: SpiderState, animati
     }, [props.animations]);
 
     function setSpiderFromAnimation(anim: SpiderAnimation) {
-        console.log(SpiderAnimationType[anim.type])
         switch (anim.type) {
             case 1:
                 // INPUT: show spider holding value
