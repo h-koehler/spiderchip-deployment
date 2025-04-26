@@ -7,7 +7,7 @@ import { UserProgress } from "../models/UserProgress";
 interface SaveProgressData {
     userId: string;
     levelId: string;
-    completed: boolean;
+    status: string;
     submissionData: {
         code: string;
         testResults: Array<{
@@ -64,8 +64,7 @@ export class LevelService {
             data: {
                 user_id: userId,
                 level_id: levelId,
-                completed: false,
-                test_case_results: [],
+                status: 'incomplete',
                 attempts: 0
             }
         });
@@ -87,14 +86,13 @@ export class LevelService {
                     }
                 },
                 update: {
-                    completed: data.completed,
+                    status: data.status,
                     updated_at: new Date()
                 },
                 create: {
                     user_id: data.userId,
                     level_id: data.levelId,
-                    completed: data.completed,
-                    test_case_results: []
+                    status: data.status
                 }
             });
 
@@ -135,38 +133,110 @@ export class LevelService {
         return levels.map((level: any) => new GameLevel(level));
     }
 
+    // Get level progress
     static async getLevelProgress(userId: string, levelId: string) {
         const prisma = await getPrisma();
+        
+        const progress = await prisma.user_progress.findUnique({
+            where: {
+                user_id_level_id: {
+                    user_id: userId,
+                    level_id: levelId
+                }
+            }
+        });
+        
+        if (!progress) {
+            // Return default values if no progress exists
+            return {
+                status: 'locked',
+                current_solution: ''
+            };
+        }
+        
+        return progress;
+    }
 
-        const [progress, submission] = await Promise.all([
-            prisma.user_progress.findUnique({
+    // Get all levels with progress for a user
+    static async getAllLevelsWithProgress(userId: string) {
+        const prisma = await getPrisma();
+        
+        const levels = await prisma.levels.findMany({
+            orderBy: { id: 'asc' },
+            select: {
+                id: true,
+                title: true,
+                user_progress: {
+                    where: { user_id: userId },
+                    select: { status: true }
+                }
+            }
+        });
+        
+        return levels.map(level => ({
+            levelId: level.id,
+            status: level.user_progress[0]?.status || 'incomplete'
+        }));
+    }
+
+    // Save all progress for a user
+    static async saveAllProgress(userId: string, progressData: Array<{levelId: string, status: string}>) {
+        const prisma = await getPrisma();
+        
+        const results = [];
+        
+        for (const item of progressData) {
+            const result = await prisma.user_progress.upsert({
                 where: {
                     user_id_level_id: {
                         user_id: userId,
-                        level_id: levelId
+                        level_id: item.levelId
                     }
-                }
-            }),
-            //I want to get the latest submission for the user on the level here
-            prisma.submissions.findFirst({
-                where: {
-                    user_id: userId,
-                    level_id: levelId
                 },
-                orderBy: {
-                    updated_at: 'desc'
+                update: {
+                    status: item.status,
+                    updated_at: new Date()
+                },
+                create: {
+                    user_id: userId,
+                    level_id: item.levelId,
+                    status: item.status
                 }
-            })
-        ]);
-
-        if (!progress && !submission) {
-            throw new NotFoundError('No progress found for this level');
+            });
+            
+            results.push(result);
         }
+        
+        return results;
+    }
 
-        return {
-            completed: progress?.completed ?? false,
-            code: (submission?.submission_data as any)?.code ?? '',
-            testResults: (submission?.submission_data as any)?.testResults ?? []
-        };
+    // Save level progress
+    static async saveLevelProgress(data: {
+        userId: string;
+        levelId: string;
+        status: string;
+        currentSolution?: string;
+    }) {
+        const prisma = await getPrisma();
+        
+        return prisma.user_progress.upsert({
+            where: {
+                user_id_level_id: {
+                    user_id: data.userId,
+                    level_id: data.levelId
+                }
+            },
+            update: {
+                status: data.status,
+                current_solution: data.currentSolution || '',
+                updated_at: new Date()
+            },
+            create: {
+                user_id: data.userId,
+                level_id: data.levelId,
+                status: data.status,
+                current_solution: data.currentSolution || ''
+            }
+        });
     }
 } 
