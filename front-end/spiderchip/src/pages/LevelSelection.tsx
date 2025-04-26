@@ -36,6 +36,7 @@ export default function LevelSelection() {
         api.get(`/levels/all/${userId}`)
             .then((response: { data: LevelStatusDict[] }) => {
                 // the data tells us each level's status
+                // could be entirely empty for a new account
                 response.data.forEach((stat: LevelStatusDict) => {
                     const trueLevel = originalLevels.find((tl) => tl.id === stat.levelId);
                     if (trueLevel) {

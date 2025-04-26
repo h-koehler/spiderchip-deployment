@@ -127,6 +127,7 @@ export default function PuzzleUI() {
                         savedCode.current = response.data.code;
                         puzzleStatus.current = response.data.status;
                     }).catch(() => {
+                        // this may well be benign if 404 - e.g., a user's first attempt
                         console.log("Failed to pull save data");
                     }).finally(() => {
                         setLoading(false);
