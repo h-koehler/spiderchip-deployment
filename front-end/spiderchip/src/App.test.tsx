@@ -33,6 +33,7 @@ describe('App Routing', () => {
   });
 
   test('redirects from "/puzzle-ui" to "/level-select" if no level is selected', () => {
+    localStorage.setItem('auth-user-token', 'dummy-token');
     window.history.pushState({}, 'Test page', '/puzzle/');
     render(<App />);
     // Expect redirection to LevelSelection since no level is selected
