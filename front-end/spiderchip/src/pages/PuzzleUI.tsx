@@ -100,7 +100,7 @@ export default function PuzzleUI() {
                         )
                     ),
                     puzzleData.slot_names ?? null,
-                    puzzleData.test_cases[0].target ? false : true, // if test cases are defining targets, no editing
+                    puzzleData.test_cases[0].slots || puzzleData.test_cases[0].target ? false : true, // if test cases are defining slot details, no editing
                     puzzleData.can_rename ?? true,
                 )
                 const level: LevelInfo = {

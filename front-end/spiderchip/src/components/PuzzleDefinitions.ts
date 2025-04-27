@@ -202,7 +202,7 @@ const levels: PuzzleDefinition[] = [
             test_cases: [{
                 input: [],
                 slots: [1, 8, 9, -2, 7, 5, 2, 0, 2, 6, 0, 0, 0],
-                output: [36]
+                output: [38]
             }, {
                 input: [],
                 slots: [7, 2, 5, 1, -2, 15, -5, 6, -9, 2, 0, 0, 0],
@@ -214,7 +214,7 @@ const levels: PuzzleDefinition[] = [
             }, {
                 input: [],
                 slots: [-8, 2, -1, -5, 0, 2, 7, -1, -2, -4, 0, 0, 0],
-                output: [-6]
+                output: [-10]
             }],
             bonus_line_count: 4,
             target_line_count: 8
