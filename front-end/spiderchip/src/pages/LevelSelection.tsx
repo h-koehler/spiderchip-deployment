@@ -28,7 +28,7 @@ export default function LevelSelection() {
     useEffect(() => {
         const userId = getCurrentUserId();
         const originalLevels: LevelItem[] = getAllPuzzles().map((p) => {
-            return { type: LevelItemType.PUZZLE, id: p.puzzle_number, title: p.title, description: p.description, status: p.puzzle_number === 1 ? LevelStatus.AVAILABLE : LevelStatus.LOCKED }
+            return { type: LevelItemType.PUZZLE, id: p.puzzle_number, title: p.title, description: p.description, status: LevelStatus.LOCKED }
         });
         const originalStories: LevelItem[] = getAllStoryBeats().map((s) => {
             return { type: LevelItemType.STORY, id: s.story_number, level: s.associated_puzzle, storyType: s.type, description: s.description, status: LevelStatus.AVAILABLE }
@@ -50,6 +50,10 @@ export default function LevelSelection() {
             .finally(() => {
                 // always want to show the levels
                 const originalAllItems = [...originalLevels, ...originalStories].sort(compareLevelItems);
+                const lastPassedLevel = originalLevels
+                    .filter((l) => l.status === LevelStatus.COMPLETED || l.status === LevelStatus.SKIPPED)
+                    .map((l) => l.id)
+                    .reduce((i, j) => { return i > j ? i : j }, 0);
                 originalAllItems.forEach((l) => {
                     // story elements after incomplete puzzles get locked
                     if (l.type === LevelItemType.STORY) {
@@ -57,6 +61,9 @@ export default function LevelSelection() {
                         if (associatedLevel && !(associatedLevel.status === LevelStatus.SKIPPED || associatedLevel.status === LevelStatus.COMPLETED)) {
                             l.status = LevelStatus.LOCKED;
                         }
+                    }
+                    else if (l.type === LevelItemType.PUZZLE && l.id === lastPassedLevel + 1) {
+                        l.status = LevelStatus.AVAILABLE;
                     }
                 })
                 setLevelList(originalAllItems);
@@ -94,9 +101,12 @@ export default function LevelSelection() {
             });
             const userId = getCurrentUserId();
             api.post(`/levels/all/${userId}`,
-                updatedLevels
-                    .filter((l) => l.type === LevelItemType.PUZZLE)
-                    .map((l) => { return { levelId: l.id, status: l.status } })
+                /* Alternatively, to update all unlocked levels, pass the following:
+                    updatedLevels
+                        .filter((l) => l.type === LevelItemType.PUZZLE && l.status !== LevelStatus.LOCKED)
+                        .map((l) => { return { levelId: l.id, status: l.status } })
+                */
+                [{ levelId: level.id, status: newStatus }]
             ).catch(() => {
                 console.log("Failed to save level status changes.");
             });

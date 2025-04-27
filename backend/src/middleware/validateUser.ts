@@ -7,9 +7,6 @@ export const validateUser = (req: Request, res: Response, next: NextFunction) =>
     // userId from URL parameter or request body
     const requestedUserId = req.params.userId || req.body.userId;
 
-    console.log('Auth user:', authenticatedUserId);
-    console.log('Requested user:', requestedUserId);
-
     if (!authenticatedUserId || authenticatedUserId !== requestedUserId) {
         return next(new AuthError('Unauthorized access to user data'));
     }

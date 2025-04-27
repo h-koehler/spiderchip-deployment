@@ -143,12 +143,14 @@ export default function PuzzleUI() {
         // don't save anything in the sandbox, and abort if we know they've saved this already
         if (puzzleId !== "sandbox" && code !== savedCode.current) {
             api.post(`/levels/${puzzleId}/${userId.current}`, {
-                levelId: puzzleId,
-                status: puzzleStatus.current
+                status: puzzleStatus.current,
+                code: code
             })
                 .then(() => {
                     savedCode.current = code;
-                    setShowSuccess(true); // don't want them to quit before it's saved
+                    if (puzzleStatus.current === LevelStatus.COMPLETED) {
+                        setShowSuccess(true); // don't want them to quit before it's saved
+                    }
                 })
                 .catch(() => {
                     console.log("Failed to save level data.");
