@@ -26,14 +26,15 @@ describe('App Routing', () => {
   });
 
   test('renders Game page when authenticated and accessing protected route "/game"', () => {
-    localStorage.setItem('token', 'dummy-token');
+    localStorage.setItem('auth-user-token', 'dummy-token');
     window.history.pushState({}, 'Test page', '/game');
     render(<App />);
     expect(screen.getByText('Game Page')).toBeInTheDocument();
   });
 
   test('redirects from "/puzzle-ui" to "/level-select" if no level is selected', () => {
-    window.history.pushState({}, 'Test page', '/puzzle-ui');
+    localStorage.setItem('auth-user-token', 'dummy-token');
+    window.history.pushState({}, 'Test page', '/puzzle/');
     render(<App />);
     // Expect redirection to LevelSelection since no level is selected
     expect(screen.getByText('Level Selection Page')).toBeInTheDocument();

@@ -1,5 +1,5 @@
 import React from "react";
-import "../components/Memo.css";
+import "./Memo.css";
 import paperCorner from "../assets/images/paper-corner.svg";
 
 const Memo = ({children}: {children: React.ReactNode}) => {

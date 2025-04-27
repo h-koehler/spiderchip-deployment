@@ -1,19 +1,18 @@
+.level-selection-container {
+    display: flex;
+    flex-direction: column;
+    gap: 2em;
+    height: 100vh;
+}
+
 .scroll-container {
+    flex: 1 0 25em;
     display: flex;
     justify-content: flex-start;
-    align-items: end;
-
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-
-    width: 100vw;
-    height: 23.25em;
+    align-items: center;
 
     overflow-x: auto;
     overflow-y: visible;
-    white-space: nowrap;
 }
 
 .scroll-container ul {
@@ -23,18 +22,20 @@
     align-items: end;
     justify-content: flex-start;
 
+    height: 10em; /* for centering, not for containing */
     width: max-content;
-    padding: 1em;
-    margin: 0;
 
-    overflow-x: auto;
+    padding: 2em;
+    margin: 0;
 }
 
-.level-selection-container {
-    display: flex;
-    flex-direction: column;
+.level-list-loading-text {
+    align-self: center;
+    margin: 0 auto;
+}
+
+.settings-dropdown {
     padding: 1.5em;
-    gap: 4em;
 }
 
 .settings-dropdown > button {
@@ -77,6 +78,7 @@
 
 ul.dropdown-menu {
     background: var(--secondary-background-color);
+    position: absolute;
     display: block;
     list-style: none;
     margin: .5em 0 0 0;
