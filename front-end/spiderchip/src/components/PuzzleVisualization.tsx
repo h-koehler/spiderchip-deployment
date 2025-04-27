@@ -1,7 +1,12 @@
 import {FontAwesomeIcon} from '@fortawesome/react-fontawesome'
 import {faSpider} from '@fortawesome/free-solid-svg-icons'
 import {useEffect, useRef, useState} from "react";
-import {SpiderState, SpiderAnimation, SpiderAnimationType, SpiderObject} from "../language-system/ls-interface-types"
+import {
+    SpiderAnimation,
+    SpiderAnimationType,
+    SpiderObject,
+    SpiderState,
+} from "../language-system/ls-interface-types"
 import "./PuzzleVisualization.css"
 
 export default function PuzzleVisualization(props: {
@@ -28,9 +33,10 @@ export default function PuzzleVisualization(props: {
 
     useEffect(() => {
         // DEBUG: showing what our new animations to visualize are
-        console.log(props.animations);
-        console.log("local:", localObjs);
-        console.log("props:", props.state.objs);
+        // console.log(props.animations);
+        // console.log("local:", localObjs);
+        // console.log("props:", props.state.objs);
+        // console.log("spiderPos:", spiderPos);
         // console.log(props.state.varslots);
         // console.log(localVarSlots);
 
@@ -57,10 +63,13 @@ export default function PuzzleVisualization(props: {
                 clearInterval(intervalRef.current!);
                 intervalRef.current = null;
                 props.setIsAnimating(false);
+
                 return;
             }
             setSpiderFromAnimation(props.animations[step]);
+            setCurrentStep(step)
             step += 1;
+
         }, 600);
 
         return () => {
@@ -73,11 +82,14 @@ export default function PuzzleVisualization(props: {
 
     function setSpiderFromAnimation(anim: SpiderAnimation) {
         console.log(SpiderAnimationType[anim.type])
-        console.log("Executing animation:", SpiderAnimationType[anim.type], "Step:", currentStep);
         switch (anim.type) {
             case SpiderAnimationType.INPUT:
                 // INPUT: show spider holding value
-                setSpiderVals([anim.n]);
+                setSpiderVals((prev) => {
+                    const newVals = [...prev];
+                    newVals.push(anim.n);
+                    return newVals;
+                });
                 setSpiderPos(null);
                 break;
             case SpiderAnimationType.LOAD:
@@ -109,11 +121,10 @@ export default function PuzzleVisualization(props: {
                 // MATH: show spider performing operation on values it is holding
                 setSpiderVals([anim.result])
                 break;
-            case SpiderAnimationType.OBJ_PUSH:
+            case SpiderAnimationType.OBJ_PUSH: {
                 const objIndex = localObjs.findIndex(o => o.name === anim.object)
                 const gridIndex = varslotsLength + objIndex
                 setSpiderPos(gridIndex)
-                console.log("OBJ_PUSH", anim.n, "at step", currentStep);
                 setTimeout(() => {
                     setSpiderVals((prev) => {
                         const newVals = [...prev];
@@ -127,7 +138,6 @@ export default function PuzzleVisualization(props: {
 
                         const newContents = [...currObj.contents]
                         newContents.push(anim.n)
-                        console.log("new contents:", newContents)
 
                         const newObj = new SpiderObject(currObj.type, currObj.name, newContents);
                         objects[objIndex] = newObj;
@@ -136,6 +146,32 @@ export default function PuzzleVisualization(props: {
 
                 }, 300);
                 break;
+            }
+            case SpiderAnimationType.OBJ_TAKE: {
+                const objIndex = localObjs.findIndex(o => o.name === anim.object)
+                const gridIndex = varslotsLength + objIndex;
+                setSpiderPos(gridIndex)
+                setTimeout(() => {
+                    setLocalObjs((prev) => {
+                        const objects = [...prev];
+                        const currObj = objects[objIndex];
+
+                        const newContents = [...currObj.contents];
+                        newContents.pop()
+
+                        const newObj = new SpiderObject(currObj.type, currObj.name, newContents);
+                        objects[objIndex] = newObj;
+                        return objects;
+                    })
+
+                    setSpiderVals((prev) => {
+                        const newVals = [...prev];
+                        newVals.push(anim.n);
+                        return newVals;
+                    });
+                }, 300)
+                break;
+            }
             case SpiderAnimationType.OUTPUT:
             case SpiderAnimationType.HALT:
                 // OUTPUT or HALT: move spider to inactive pos
@@ -191,7 +227,7 @@ export default function PuzzleVisualization(props: {
                     ))}
                 </div>
                 <div className="inactive-spider">
-                    {props.state.state !== 3 || spiderPos == null ? (
+                    { spiderPos == null ? (
                         <div className="spider-icon">
                             <FontAwesomeIcon icon={faSpider} size={"2xl"}/>
                             {spiderVals.slice(0, 3).map((v, i) => (
