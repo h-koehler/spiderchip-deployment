@@ -118,18 +118,19 @@ export default function PuzzleUI() {
                 const chosenCase = Math.floor(Math.random() * puzzle.testCases.length);
                 caseNum.current = chosenCase;
                 runtime.current = createRuntime(puzzle);
-                runtime.current.init("", vars, chosenCase);
-                setRtState(runtime.current.state());
 
                 api.get(`/levels/${puzzleId}/${userId.current}`)
                     .then((response) => {
+                        runtime.current.init(response.data.code, vars, chosenCase);
                         setCode(response.data.code);
                         savedCode.current = response.data.code;
                         puzzleStatus.current = response.data.status;
                     }).catch(() => {
                         // this may well be benign if 404 - e.g., a user's first attempt
+                        runtime.current.init("", vars, chosenCase);
                         console.log("Failed to pull save data");
                     }).finally(() => {
+                        setRtState(runtime.current.state());
                         setLoading(false);
                     })
             } else {
@@ -140,21 +141,29 @@ export default function PuzzleUI() {
     }, [puzzleId]);
 
     const saveProgress = useCallback(() => {
-        // don't save anything in the sandbox, and abort if we know they've saved this already
-        if (puzzleId !== "sandbox" && code !== savedCode.current) {
-            api.post(`/levels/${puzzleId}/${userId.current}`, {
-                status: puzzleStatus.current,
-                code: code
-            })
-                .then(() => {
-                    savedCode.current = code;
-                    if (puzzleStatus.current === LevelStatus.COMPLETED) {
-                        setShowSuccess(true); // don't want them to quit before it's saved
-                    }
+        // don't save anything in the sandbox
+        if (puzzleId !== "sandbox") {
+            // if we know we haven't saved this, then save it
+            if (code !== savedCode.current) {
+                api.post(`/levels/${puzzleId}/${userId.current}`, {
+                    status: puzzleStatus.current,
+                    code: code
                 })
-                .catch(() => {
-                    console.log("Failed to save level data.");
-                })
+                    .then(() => {
+                        savedCode.current = code;
+                        // want to show success only after we've synced the save
+                        if (puzzleStatus.current === LevelStatus.COMPLETED) {
+                            setShowSuccess(true);
+                        }
+                    })
+                    .catch(() => {
+                        console.log("Failed to save level data.");
+                    })
+            }
+            // they re-beat the level with the same code
+            else if (puzzleStatus.current === LevelStatus.COMPLETED) {
+                setShowSuccess(true);
+            }
         }
     }, [puzzleId, code]);
 
@@ -301,6 +310,7 @@ export default function PuzzleUI() {
         setHighlightedLines(undefined);
         setAnims([]);
         updateLinting();
+        setShowSuccess(false); // so they can redo in peace
     }
 
     const lintString = (err: LT.SpiderError): string => {
