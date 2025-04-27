@@ -3,7 +3,7 @@ import axios from "axios";
 const TOKEN_STORAGE_KEY = "auth-user-token";
 
 const api = axios.create({
-    baseURL: 'http://localhost:4000/api'
+    baseURL: '/api'
 });
 
 let userId: string | null = null;
