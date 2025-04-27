@@ -29,6 +29,11 @@
     margin: 0;
 }
 
+.level-list-loading-text {
+    align-self: center;
+    margin: 0 auto;
+}
+
 .settings-dropdown {
     padding: 1.5em;
 }

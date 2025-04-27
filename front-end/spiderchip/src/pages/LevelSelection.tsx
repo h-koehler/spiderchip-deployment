@@ -163,6 +163,7 @@ export default function LevelSelection() {
                 )}
             </div>
             <div className="scroll-container" ref={scrollRef}>
+                {levelList.length === 0 && <h3 className="level-list-loading-text">Loading...</h3>}
                 <ul>
                     {levelList.map(level => (
                         <LevelSelectButton
