@@ -8,9 +8,6 @@ const router = express.Router();
 // All routes require authentication
 router.use(requireAuth);
 
-// Get all levels (optionally with user progress)
-router.get('/', LevelController.getAllLevels);
-
 // Get all levels with progress for a user
 router.get('/all/:userId', validateUser, LevelController.getAllLevelsForUser);
 

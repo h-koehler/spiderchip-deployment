@@ -1,25 +1,14 @@
 import { Request, Response, NextFunction } from 'express';
 import { LevelService } from '../services/levelService';
-import { BadRequestError } from '../errors';
+import { BadRequestError, NotFoundError } from '../errors';
 
 export class LevelController {
     // Get level with user progress
     static async getLevelWithProgress(req: Request, res: Response, next: NextFunction) {
         try {
             const { userId, levelId } = req.params;
-            const data = await LevelService.getLevelProgress(userId, levelId);
+            const data = await LevelService.getLevelProgress(userId, parseInt(levelId));
             res.json(data);
-        } catch (error) {
-            next(error);
-        }
-    }
-
-    // Get all levels
-    static async getAllLevels(req: Request, res: Response, next: NextFunction) {
-        try {
-            const userId = req.user?.id; // From JWT token
-            const levels = await LevelService.getAllLevels(userId);
-            res.json(levels);
         } catch (error) {
             next(error);
         }
@@ -36,7 +25,7 @@ export class LevelController {
 
             const data = await LevelService.saveProgress({
                 userId: userId!,
-                levelId,
+                levelId: parseInt(levelId),
                 status,
                 submissionData: {
                     code,
@@ -65,7 +54,11 @@ export class LevelController {
     static async saveAllProgress(req: Request, res: Response, next: NextFunction) {
         try {
             const { userId } = req.params;
-            const progressData = req.body; // Array of {levelId, status}
+            const progressData = req.body.map((item: any) => ({
+                ...item,
+                levelId: parseInt(item.levelId)
+            }));
+            
             const data = await LevelService.saveAllProgress(userId, progressData);
             res.json(data);
         } catch (error) {
@@ -73,21 +66,22 @@ export class LevelController {
         }
     }
 
-    // Get level progress
+    // Get specific level progress
     static async getLevelProgress(req: Request, res: Response, next: NextFunction) {
         try {
             const { userId, levelId } = req.params;
-            const data = await LevelService.getLevelProgress(userId, levelId);
-            res.json({
-                status: data.status,
-                code: data.current_solution || ''
-            });
+            const data = await LevelService.getLevelProgress(userId, parseInt(levelId));
+            res.json(data);
         } catch (error) {
-            next(error);
+            if (error instanceof NotFoundError) {
+                res.status(404).json({ error: error.message });
+            } else {
+                next(error);
+            }
         }
     }
 
-    // Save level progress
+    // Save specific level progress
     static async saveLevelProgress(req: Request, res: Response, next: NextFunction) {
         try {
             const { userId, levelId } = req.params;
@@ -95,14 +89,14 @@ export class LevelController {
             
             const data = await LevelService.saveLevelProgress({
                 userId,
-                levelId,
+                levelId: parseInt(levelId),
                 status,
                 currentSolution: code
             });
             
             res.json({
                 status: data.status,
-                code: data.current_solution || ''
+                code: data.current_solution
             });
         } catch (error) {
             next(error);

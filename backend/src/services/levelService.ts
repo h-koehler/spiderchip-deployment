@@ -6,7 +6,7 @@ import { UserProgress } from "../models/UserProgress";
 
 interface SaveProgressData {
     userId: string;
-    levelId: string;
+    levelId: number;
     status: string;
     submissionData: {
         code: string;
@@ -18,59 +18,8 @@ interface SaveProgressData {
 }
 
 export class LevelService {
-    // Load both level data and user progress
-    static async getLevelWithProgress(userId: string, levelId: string): Promise<{level: GameLevel, progress: UserProgress}> {
-        const prisma = await getPrisma();
-        
-        // Get level and progress in parallel
-        const [levelData, progressData] = await Promise.all([
-            prisma.levels.findUnique({
-                where: { id: levelId }
-            }),
-            prisma.user_progress.findUnique({
-                where: {
-                    user_id_level_id: {
-                        user_id: userId,
-                        level_id: levelId
-                    }
-                }
-            })
-        ]);
-
-        if (!levelData) {
-            throw new NotFoundError(`Level with ID ${levelId} not found`);
-        }
-
-        // Create GameLevel instance
-        const level = new GameLevel(levelData);
-
-        // If no progress exists, create initial progress
-        if (!progressData) {
-            const newProgress = await this.initializeUserProgress(userId, levelId);
-            return { level, progress: newProgress };
-        }
-
-        // Create UserProgress instance
-        const progress = new UserProgress(progressData);
-
-        return { level, progress };
-    }
-
-    // Initialize new progress for a user on a level
-    private static async initializeUserProgress(userId: string, levelId: string): Promise<UserProgress> {
-        const prisma = await getPrisma();
-        
-        const progressData = await prisma.user_progress.create({
-            data: {
-                user_id: userId,
-                level_id: levelId,
-                status: 'incomplete',
-                attempts: 0
-            }
-        });
-
-        return new UserProgress(progressData);
-    }
+   
+    
 
     // Save user progress
     static async saveProgress(data: SaveProgressData) {
@@ -117,24 +66,8 @@ export class LevelService {
         });
     }
 
-    // Get all available levels (possibly with user progress)
-    static async getAllLevels(userId?: string): Promise<GameLevel[]> {
-        const prisma = await getPrisma();
-        
-        const levels = await prisma.levels.findMany({
-            orderBy: { created_at: 'asc' },
-            include: userId ? {
-                user_progress: {
-                    where: { user_id: userId }
-                }
-            } : undefined
-        });
-
-        return levels.map((level: any) => new GameLevel(level));
-    }
-
     // Get level progress
-    static async getLevelProgress(userId: string, levelId: string) {
+    static async getLevelProgress(userId: string, levelId: number) {
         const prisma = await getPrisma();
         
         const progress = await prisma.user_progress.findUnique({
@@ -143,44 +76,45 @@ export class LevelService {
                     user_id: userId,
                     level_id: levelId
                 }
+            },
+            select: {
+                status: true,
+                current_solution: true
             }
         });
         
         if (!progress) {
-            // Return default values if no progress exists
-            return {
-                status: 'locked',
-                current_solution: ''
-            };
+            throw new NotFoundError('Level progress not found');
         }
         
-        return progress;
+        return {
+            status: progress.status,
+            code: progress.current_solution
+        };
     }
 
     // Get all levels with progress for a user
     static async getAllLevelsWithProgress(userId: string) {
         const prisma = await getPrisma();
         
-        const levels = await prisma.levels.findMany({
-            orderBy: { id: 'asc' },
+        // Just get the user progress entries directly
+        const progress = await prisma.user_progress.findMany({
+            where: { user_id: userId },
             select: {
-                id: true,
-                title: true,
-                user_progress: {
-                    where: { user_id: userId },
-                    select: { status: true }
-                }
+                level_id: true,
+                status: true
             }
         });
         
-        return levels.map(level => ({
-            levelId: level.id,
-            status: level.user_progress[0]?.status || 'incomplete'
+        // Map to the expected format
+        return progress.map(item => ({
+            levelId: item.level_id,
+            status: item.status
         }));
     }
 
     // Save all progress for a user
-    static async saveAllProgress(userId: string, progressData: Array<{levelId: string, status: string}>) {
+    static async saveAllProgress(userId: string, progressData: Array<{levelId: number, status: string}>) {
         const prisma = await getPrisma();
         
         const results = [];
@@ -200,11 +134,15 @@ export class LevelService {
                 create: {
                     user_id: userId,
                     level_id: item.levelId,
-                    status: item.status
+                    status: item.status,
+                    current_solution: ""
                 }
             });
             
-            results.push(result);
+            results.push({
+                levelId: result.level_id,
+                status: result.status
+            });
         }
         
         return results;
@@ -213,9 +151,9 @@ export class LevelService {
     // Save level progress
     static async saveLevelProgress(data: {
         userId: string;
-        levelId: string;
+        levelId: number;
         status: string;
-        currentSolution?: string;
+        currentSolution: string;
     }) {
         const prisma = await getPrisma();
         
@@ -228,14 +166,14 @@ export class LevelService {
             },
             update: {
                 status: data.status,
-                current_solution: data.currentSolution || '',
+                current_solution: data.currentSolution,
                 updated_at: new Date()
             },
             create: {
                 user_id: data.userId,
                 level_id: data.levelId,
                 status: data.status,
-                current_solution: data.currentSolution || ''
+                current_solution: data.currentSolution
             }
         });
     }
