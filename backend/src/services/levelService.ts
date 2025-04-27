@@ -117,10 +117,8 @@ export class LevelService {
     static async saveAllProgress(userId: string, progressData: Array<{levelId: number, status: string}>) {
         const prisma = await getPrisma();
         
-        const results = [];
-        
         for (const item of progressData) {
-            const result = await prisma.user_progress.upsert({
+            await prisma.user_progress.upsert({
                 where: {
                     user_id_level_id: {
                         user_id: userId,
@@ -138,14 +136,7 @@ export class LevelService {
                     current_solution: ""
                 }
             });
-            
-            results.push({
-                levelId: result.level_id,
-                status: result.status
-            });
         }
-        
-        return results;
     }
 
     // Save level progress
@@ -157,7 +148,7 @@ export class LevelService {
     }) {
         const prisma = await getPrisma();
         
-        return prisma.user_progress.upsert({
+        await prisma.user_progress.upsert({
             where: {
                 user_id_level_id: {
                     user_id: data.userId,

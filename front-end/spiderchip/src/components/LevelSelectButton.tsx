@@ -1,22 +1,22 @@
-import {LevelItem} from "../types";
+import { LevelItem, LevelItemType, LevelStatus } from "../types";
 import "./LevelSelectButton.css"
 import CompletedIcon from '../assets/images/completed-icon.svg';
 import SkippedIcon from '../assets/images/skipped-icon.svg';
 import defaultFolder from '../assets/images/folder-default.svg';
 import hoverFolder from '../assets/images/folder-hover.svg';
 import activeFolder from '../assets/images/folder-active.svg';
-import {useState} from "react";
+import { useState } from "react";
+import { StoryBeatType } from "./StoryDefinitions";
 
 export default function LevelSelectButton(props: {
     level: LevelItem,
     isActive: boolean,
-    setSelectedLevel: (level: LevelItem) => void,
-    updateLevelStatus: (levelId: number, newStatus: string) => void;
+    onClick: (level: LevelItem) => void
 }) {
     const [isHovered, setIsHovered] = useState(false);
 
     const handleMouseEnter = () => {
-        if (props.level.status !== "not-available") {
+        if (props.level.status !== LevelStatus.LOCKED) {
             setIsHovered(true);
         }
     };
@@ -26,27 +26,26 @@ export default function LevelSelectButton(props: {
     }
 
     const handleLevelOnClick = () => {
-        props.setSelectedLevel(props.level)
+        props.onClick(props.level)
     }
 
     const renderStatusIcon = () => {
         switch (props.level.status) {
-            case "completed":
-                return <img src={CompletedIcon}/>
-            case "skipped":
-                return <img src={SkippedIcon}/>
+            case LevelStatus.COMPLETED:
+                return <img src={CompletedIcon} />
+            case LevelStatus.SKIPPED:
+                return <img src={SkippedIcon} />
             default:
                 return null;
         }
     }
 
     return (
-        <li key={props.level.id}
+        <li
             className="level-select-button"
             onMouseEnter={handleMouseEnter}
             onMouseLeave={handleMouseLeave}
         >
-            {/*<div className="folder-icon-wrapper">*/}
             <img
                 src={defaultFolder}
                 alt={"closed folder"}
@@ -62,14 +61,18 @@ export default function LevelSelectButton(props: {
                 alt={"active folder"}
                 className={`icon ${props.isActive ? "" : "hidden"}`}
             />
-            {/*</div>*/}
             <button
                 className="level-button"
                 onClick={() => handleLevelOnClick()}
-                disabled={props.level.status === "not-available"}
+                disabled={props.level.status === LevelStatus.LOCKED}
             >
-                <h2>{props.level.title}</h2>
-                <h3>{props.level.category}</h3>
+                {props.level.type === LevelItemType.PUZZLE ? <>
+                    <h2>{props.level.title}</h2>
+                    <h3>Level {props.level.id}</h3>
+                </> : <>
+                    <h2>{props.level.storyType === StoryBeatType.MEMO ? "Memo" : "Dialogue"}</h2>
+                    <h3>Story</h3>
+                </>}
                 <div className="status-icon">
                     {renderStatusIcon()}
                 </div>

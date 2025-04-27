@@ -26,7 +26,7 @@ const levels: PuzzleDefinition[] = [
     {
         puzzle_number: 2,
         title: 'Swapper',
-        description: 'The swapper exchanges the each pair of values that are given to it.',
+        description: 'The swapper exchanges each pair of values that are given to it.',
         data: {
             hints: ["It's easiest to read both values before trying to output either of them.", "Use two variables - read the first input into x, then the second into y.", "If you read the first input into x, then you should output(y) first."],
             objects: {},

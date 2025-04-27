@@ -1,4 +1,4 @@
-import { LevelItem, LineHighlight, LineHighlightType } from "../types.ts";
+import { LevelStatus, LineHighlight, LineHighlightType } from "../types.ts";
 import PuzzleVisualization from "../components/PuzzleVisualization.tsx";
 import PuzzleInput from "../components/PuzzleInput.tsx";
 import PuzzleOutput from "../components/PuzzleOutput.tsx";
@@ -20,17 +20,29 @@ import createRuntime from "../language-system/ls-system.ts";
 import * as LT from "../language-system/ls-interface-types.ts";
 import { useNavigate, useParams } from "react-router-dom";
 import { getPuzzleDefinition } from "../components/PuzzleDefinitions.ts";
+import DebugPuzzleVisualization from "../components/DebugPuzzleVisualization.tsx";
+import api, { getCurrentUserId } from "../services/api.ts";
 
-const emptyLevel: LevelItem = { id: "unknown", title: "Unknown", description: "Something went wrong when loading the puzzle." };
+type LevelInfo = {
+    id: string | number;
+    title: string;
+    description: string;
+}
+
+const emptyLevel: LevelInfo = { id: "unknown", title: "Unknown", description: "Something went wrong when loading the puzzle." };
 const emptyPuzzle = new LT.Puzzle(0, [new LT.PuzzleTest([], null, [], [])]);
-const sandboxLevel: LevelItem = { id: "sandbox", title: "Sandbox", description: "Create your own puzzle and experiment with the code!" };
+const sandboxLevel: LevelInfo = { id: "sandbox", title: "Sandbox", description: "Create your own puzzle and experiment with the code!" };
 
 export default function PuzzleUI() {
     const { puzzleId } = useParams();
     const navigate = useNavigate();
 
+    const userId = useRef<string | undefined>(getCurrentUserId());
+    const puzzleStatus = useRef<LevelStatus>(LevelStatus.AVAILABLE);
+    const [showSuccess, setShowSuccess] = useState(false);
+
     const [loading, setLoading] = useState(true);
-    const [level, setLevel] = useState<LevelItem>(emptyLevel);
+    const [level, setLevel] = useState<LevelInfo>(emptyLevel);
 
     const [hints, setHints] = useState<string[]>([]);
     const [showHints, setShowHints] = useState(false);
@@ -39,16 +51,17 @@ export default function PuzzleUI() {
     const runtime = useRef<LT.SpiderRuntime>(createRuntime(emptyPuzzle));
     const [rtState, setRtState] = useState<LT.SpiderState | null>(null);
     const [anims, setAnims] = useState<LT.SpiderAnimation[]>([]);
-    const [caseNum, setCaseNum] = useState<number>(0);
+    const caseNum = useRef<number>(0);
 
     const [output, setOutput] = useState<string>("");
     const [highlightedLines, setHighlightedLines] = useState<LineHighlight[] | undefined>(undefined);
 
     const [menuIsOpen, setMenuIsOpen] = useState(false);
     const [bigDetails, setBigDetails] = useState(false);
+    const [debugVis, setDebugVis] = useState(false);
 
     const [code, setCode] = useState<string>("");
-    const [savedCode, setSavedCode] = useState<string>("");
+    const savedCode = useRef<string>("");
     const [initialVars, setInitialVars] = useState<LT.CustomSlot[]>([]);
 
     useEffect(() => {
@@ -62,10 +75,13 @@ export default function PuzzleUI() {
     }, []);
 
     useEffect(() => {
+        // NOTE: ensure all paths setLoading to false once they're done!
         setLoading(true);
+
         if (puzzleId === "sandbox") {
             setLevel(sandboxLevel);
             setHints(["Sandbox puzzles do not have hints."]);
+            setLoading(false);
         } else {
             const puzzleDefinition = getPuzzleDefinition(Number.parseInt(puzzleId ?? "-1"));
             if (puzzleDefinition) {
@@ -87,8 +103,8 @@ export default function PuzzleUI() {
                     puzzleData.test_cases[0].target ? false : true, // if test cases are defining targets, no editing
                     puzzleData.can_rename ?? true,
                 )
-                const level: LevelItem = {
-                    id: puzzleId ?? "Unknown",
+                const level: LevelInfo = {
+                    id: puzzleId ?? "unknown",
                     title: puzzleDefinition.title,
                     description: puzzleData.overview
                 }
@@ -100,29 +116,47 @@ export default function PuzzleUI() {
                 setInitialVars(vars);
 
                 const chosenCase = Math.floor(Math.random() * puzzle.testCases.length);
-                setCaseNum(chosenCase);
+                caseNum.current = chosenCase;
                 runtime.current = createRuntime(puzzle);
                 runtime.current.init("", vars, chosenCase);
                 setRtState(runtime.current.state());
 
-                // TODO: use THEIR code, this as a fallback
-                setCode("");
-                setSavedCode("");
+                api.get(`/levels/${puzzleId}/${userId.current}`)
+                    .then((response) => {
+                        setCode(response.data.code);
+                        savedCode.current = response.data.code;
+                        puzzleStatus.current = response.data.status;
+                    }).catch(() => {
+                        // this may well be benign if 404 - e.g., a user's first attempt
+                        console.log("Failed to pull save data");
+                    }).finally(() => {
+                        setLoading(false);
+                    })
             } else {
                 console.log("Could not find puzzle.");
+                setLoading(false);
             }
         }
-        setLoading(false);
     }, [puzzleId]);
 
     const saveProgress = useCallback(() => {
         // don't save anything in the sandbox, and abort if we know they've saved this already
-        if (puzzleId !== "sandbox" && code !== savedCode) {
-            console.log("Saving puzzle progress...");
-            // TODO: save the code and progress for the current puzzle id
-            setSavedCode(code);
+        if (puzzleId !== "sandbox" && code !== savedCode.current) {
+            api.post(`/levels/${puzzleId}/${userId.current}`, {
+                status: puzzleStatus.current,
+                code: code
+            })
+                .then(() => {
+                    savedCode.current = code;
+                    if (puzzleStatus.current === LevelStatus.COMPLETED) {
+                        setShowSuccess(true); // don't want them to quit before it's saved
+                    }
+                })
+                .catch(() => {
+                    console.log("Failed to save level data.");
+                })
         }
-    }, [puzzleId, code, savedCode]);
+    }, [puzzleId, code]);
 
     useEffect(() => {
         // the hail-mary save
@@ -138,7 +172,7 @@ export default function PuzzleUI() {
             (name, i) => new LT.CustomSlot(i, name ?? undefined, 0)
         ) ?? [];
         setInitialVars(vars);
-        setCaseNum(0);
+        caseNum.current = 0;
 
         // now go update the visuals
         resetCode();
@@ -174,7 +208,7 @@ export default function PuzzleUI() {
         setCode(newCode);
 
         // parse whatever they just changed the code to
-        runtime.current.init(newCode, initialVars, caseNum);
+        runtime.current.init(newCode, initialVars, caseNum.current);
         const state = rtState ?? runtime.current.state();
 
         // check the PREVIOUS state - if it's already new, we shouldn't need to re-render
@@ -245,13 +279,14 @@ export default function PuzzleUI() {
                 break;
             case LT.SpiderStateEnum.SUCCESS:
                 highlightType = LineHighlightType.SUCCESS;
-                additionalMessage = "Test passed!";
+                additionalMessage = "Puzzle completed!";
+                puzzleStatus.current = LevelStatus.COMPLETED;
                 saveProgress();
                 break;
             case LT.SpiderStateEnum.DUBIOUS:
                 highlightType = LineHighlightType.DEBUG;
                 additionalMessage = "Test case passed, but another failed. Rerun your code.";
-                setCaseNum(newState.failedCase ?? 0);
+                caseNum.current = newState.failedCase ?? 0;
                 saveProgress();
                 break;
         }
@@ -260,7 +295,7 @@ export default function PuzzleUI() {
     }
 
     const resetCode = () => {
-        runtime.current.init(code, initialVars, caseNum);
+        runtime.current.init(code, initialVars, caseNum.current);
         setRtState(runtime.current.state());
         setOutput("");
         setHighlightedLines(undefined);
@@ -287,21 +322,32 @@ export default function PuzzleUI() {
                     <img src={InputIcon} alt="Input Icon" />
                 </div>
                 <PuzzleInput initialValue={code} onChange={editCode} lineHighlights={highlightedLines} />
-                {showHints &&
-                    <div className="hint-container">
-                        <div>
-                            <p className="hint-title">Hint {currentHint + 1}</p>
-                            <p className="hint-text">{hints[currentHint]}</p>
+                <div className="puzzle-messsages">
+                    {showSuccess &&
+                        <div className="puzzle-messages-container success-container">
+                            <div className="puzzle-message">
+                                <p className="text">Success! You have completed this puzzle!</p>
+                            </div>
+                            <div className="spacing"></div>
+                            <button className="primary-button" onClick={() => menuClickedQuit()}>Return to Level Select</button>
                         </div>
-                        <div className="hint-spacing"></div>
-                        <button className="prev-hint-button" onClick={() => setCurrentHint(currentHint - 1)} disabled={currentHint <= 0}>
-                            <img src={PlayIcon} />
-                        </button>
-                        <button className="next-hint-button" onClick={() => setCurrentHint(currentHint + 1)} disabled={currentHint >= hints.length - 1}>
-                            <img src={PlayIcon} />
-                        </button>
-                    </div>
-                }
+                    }
+                    {showHints &&
+                        <div className="puzzle-messages-container hint-container">
+                            <div className="puzzle-message">
+                                <p className="title">Hint {currentHint + 1}</p>
+                                <p className="text">{hints[currentHint]}</p>
+                            </div>
+                            <div className="spacing"></div>
+                            <button className="hint-cycle-button prev-hint" onClick={() => setCurrentHint(currentHint - 1)} disabled={currentHint <= 0}>
+                                <img src={PlayIcon} />
+                            </button>
+                            <button className="hint-cycle-button next-hint" onClick={() => setCurrentHint(currentHint + 1)} disabled={currentHint >= hints.length - 1}>
+                                <img src={PlayIcon} />
+                            </button>
+                        </div>
+                    }
+                </div>
                 <div className="action-buttons">
                     <button className="menu-button" onClick={toggleMenu}>
                         <img src={MenuIcon} />
@@ -328,8 +374,13 @@ export default function PuzzleUI() {
             <div className="visualization-container">
                 <div className="header">
                     <img src={VizIcon} />
+                    <button className="primary-button small-button"
+                        onClick={() => setDebugVis(!debugVis)}>
+                        {debugVis ? "Use Animated View" : "Use Clean View"}
+                    </button>
                 </div>
-                {rtState && <PuzzleVisualization state={rtState} animations={anims} />}
+                {rtState && !debugVis && <PuzzleVisualization state={rtState} animations={anims} />}
+                {rtState && debugVis && <DebugPuzzleVisualization state={rtState} />}
             </div>
             <div className="output-container">
                 <div className="header">
@@ -348,7 +399,7 @@ export default function PuzzleUI() {
                 </div>
                 {puzzleId === "sandbox" ?
                     <PuzzleSandboxControls extraClass={bigDetails ? "big-details" : ""} onApply={updateSandboxPuzzle} /> :
-                    <PuzzleDetails extraClass={bigDetails ? "big-details" : ""} level={level} />}
+                    <PuzzleDetails extraClass={bigDetails ? "big-details" : ""} description={level.description} />}
             </div>
 
             {menuIsOpen && <PuzzlePauseMenu onResume={() => toggleMenu()} onQuit={() => menuClickedQuit()} />}

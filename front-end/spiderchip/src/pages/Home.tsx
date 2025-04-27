@@ -3,14 +3,14 @@ import { useState } from "react";
 import AuthModal from "../components/AuthModal";
 import { useNavigate } from 'react-router-dom';
 import Logo from "../assets/images/logo.svg";
+import { isAuthenticated } from '../services/api';
 
 const Home = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const navigate = useNavigate()
 
   const handleStartClick = () => {
-    const token = localStorage.getItem("token");
-    if (token) {
+    if (isAuthenticated()) {
       navigate("/game");
     } else {
       setIsModalOpen(true);

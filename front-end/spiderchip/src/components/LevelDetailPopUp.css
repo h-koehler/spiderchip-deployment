@@ -1,11 +1,4 @@
 .puzzle-details-window {
-    /*position: fixed;*/
-    /*right: 0;*/
-    /*top: 0;*/
-    /*display: inline-block;*/
-    /*flex-direction: column;*/
-    /*align-items: center;*/
-    /*z-index: 100;*/
     display: inline-block;
     position: relative;
 }
@@ -41,7 +34,7 @@
 }
 
 .puzzle-details h2 {
-    font-size: 1.25em;
+    font-size: 1.5em;
     font-family: W95FA, serif;
     font-weight: normal;
 }
@@ -52,7 +45,7 @@
 }
 
 .puzzle-details p {
-    font-size: 1.25em;
+    font-size: 1.5em;
 }
 
 .puzzle-details-buttons {

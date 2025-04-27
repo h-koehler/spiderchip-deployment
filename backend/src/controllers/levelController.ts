@@ -23,7 +23,7 @@ export class LevelController {
                 throw new BadRequestError('User ID is required');
             }
 
-            const data = await LevelService.saveProgress({
+            await LevelService.saveProgress({
                 userId: userId!,
                 levelId: parseInt(levelId),
                 status,
@@ -32,8 +32,8 @@ export class LevelController {
                     testResults
                 }
             });
-            
-            res.json(data);
+
+            res.send();
         } catch (error) {
             next(error);
         }
@@ -59,8 +59,8 @@ export class LevelController {
                 levelId: parseInt(item.levelId)
             }));
             
-            const data = await LevelService.saveAllProgress(userId, progressData);
-            res.json(data);
+            await LevelService.saveAllProgress(userId, progressData);
+            res.send();
         } catch (error) {
             next(error);
         }
@@ -87,17 +87,13 @@ export class LevelController {
             const { userId, levelId } = req.params;
             const { status, code } = req.body;
             
-            const data = await LevelService.saveLevelProgress({
+            await LevelService.saveLevelProgress({
                 userId,
                 levelId: parseInt(levelId),
                 status,
                 currentSolution: code
             });
-            
-            res.json({
-                status: data.status,
-                code: data.current_solution
-            });
+            res.send();
         } catch (error) {
             next(error);
         }
