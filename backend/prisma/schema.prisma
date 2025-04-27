@@ -8,16 +8,7 @@ datasource db {
   directUrl = env("DIRECT_URL")
 }
 
-model levels {
-  id            String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  title         String
-  description   String
-  input_data    Json          
-  created_at    DateTime?     @default(now()) @db.Timestamp(6)
-  updated_at    DateTime?     @default(now()) @db.Timestamp(6)
-  submissions   submissions[]
-  user_progress user_progress[] 
-}
+
 
 model roles {
   id          String    @id @unique @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
@@ -31,12 +22,11 @@ model roles {
 model submissions {
   id              String    @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
   user_id         String    @db.Uuid
-  level_id        String    @db.Uuid
+  level_id        Int
   submission_data Json
   created_at      DateTime? @default(now()) @db.Timestamp(6)
   updated_at      DateTime? @default(now()) @db.Timestamp(6)
   submitted_at    DateTime? @default(now()) @db.Timestamp(6)
-  level           levels    @relation(fields: [level_id], references: [id], onDelete: Cascade)
   user            users     @relation(fields: [user_id], references: [id], onDelete: Cascade)
 
   @@unique([user_id, level_id])
@@ -45,17 +35,13 @@ model submissions {
 model user_progress {
   id               String    @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
   user_id          String    @db.Uuid
-  level_id         String    @db.Uuid
-  completed        Boolean   @default(false)
-  current_solution String?   // Store the user's current code
-  test_case_results Json     // Array of TestCaseResult
-  attempts         Int      @default(0)
+  level_id         Int       @default(0)
+  status           String    @default("locked")
+  current_solution String    @default("") // Store the user's current code
   created_at       DateTime? @default(now()) @db.Timestamp(6)
   updated_at       DateTime? @default(now()) @db.Timestamp(6)
-  last_attempt_at  DateTime? @db.Timestamp(6)
   
   user            users     @relation(fields: [user_id], references: [id], onDelete: Cascade)
-  level           levels    @relation(fields: [level_id], references: [id], onDelete: Cascade)
   
   @@unique([user_id, level_id])
 }
