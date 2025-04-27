@@ -90,7 +90,7 @@ export default function LevelSelection() {
                     // unlock the stuff after it
                     if (l.type === LevelItemType.STORY && l.level == level.id) {
                         return { ...l, status: LevelStatus.AVAILABLE };
-                    } else if (l.type === LevelItemType.PUZZLE && l.id === level.id + 1) {
+                    } else if (l.type === LevelItemType.PUZZLE && l.status === LevelStatus.LOCKED && l.id === level.id + 1) {
                         return { ...l, status: LevelStatus.AVAILABLE };
                     } else {
                         return l;

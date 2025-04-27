@@ -47,7 +47,7 @@ export const getCurrentUserId = (): string | null => {
 }
 
 export const isAuthenticated = (): boolean => {
-    return !!localStorage.getItem(TOKEN_STORAGE_KEY);
+    return !!userId || !!localStorage.getItem(TOKEN_STORAGE_KEY);
 }
 
 // bootstrapping ourselves
