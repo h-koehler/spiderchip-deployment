@@ -210,6 +210,14 @@ button img {
     align-items: center;
 }
 
+.header p {
+    color: white;
+}
+
+.header input[type="number"] {
+    width: 3em;
+}
+
 .header > img {
     height: 1.5em;
     width: fit-content;

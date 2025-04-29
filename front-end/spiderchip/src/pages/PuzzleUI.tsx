@@ -5,7 +5,7 @@ import PuzzleOutput from "../components/PuzzleOutput.tsx";
 import PuzzleDetails from "../components/PuzzleDetails.tsx";
 import PuzzleSandboxControls from "../components/PuzzleSandboxControls.tsx";
 import "./PuzzleUI.css"
-import { useEffect, useState, useRef, useCallback } from "react";
+import { useEffect, useState, useRef, useCallback, ChangeEvent } from "react";
 import PuzzlePauseMenu from "../components/PuzzlePauseMenu.tsx";
 import InputIcon from "../assets/images/input-icon.svg";
 import DetailsIcon from "../assets/images/details-icon.svg";
@@ -59,6 +59,7 @@ export default function PuzzleUI() {
     const [menuIsOpen, setMenuIsOpen] = useState(false);
     const [bigDetails, setBigDetails] = useState(false);
     const [debugVis, setDebugVis] = useState(false);
+    const [animSpeed, setAnimSpeed] = useState(2);
 
     const [code, setCode] = useState<string>("");
     const savedCode = useRef<string>("");
@@ -317,6 +318,17 @@ export default function PuzzleUI() {
         return `Line ${err.line}: ${err.msg}`;
     }
 
+    const changeAnimationSpeed = (e: ChangeEvent<HTMLInputElement>) => {
+        const value = Number.parseInt(e.target.value);
+        if (value < 1) {
+            setAnimSpeed(1);
+        } else if (value > 3) {
+            setAnimSpeed(3);
+        } else {
+            setAnimSpeed(value);
+        }
+    }
+
     if (loading) {
         return (
             <div className="puzzle-loading">
@@ -371,7 +383,6 @@ export default function PuzzleUI() {
                         <img src={StepIcon} />
                         Step
                     </button>
-                    {/* TODO: show hints upon pressing this button */}
                     <button className="hint-button" onClick={() => setShowHints(!showHints)}>
                         <img src={HintIcon} />
                         Hint
@@ -389,8 +400,12 @@ export default function PuzzleUI() {
                         onClick={() => setDebugVis(!debugVis)}>
                         {debugVis ? "Use Animated View" : "Use Clean View"}
                     </button>
+                    {!debugVis && <>
+                        <p>Animation Speed:</p>
+                        <input type="number" value={animSpeed} onChange={(e) => changeAnimationSpeed(e)} />
+                    </>}
                 </div>
-                {rtState && !debugVis && <PuzzleVisualization state={rtState} animations={anims}/>}
+                {rtState && !debugVis && <PuzzleVisualization state={rtState} animations={anims} animationSpeedScale={animSpeed} />}
                 {rtState && debugVis && <DebugPuzzleVisualization state={rtState} />}
             </div>
             <div className="output-container">

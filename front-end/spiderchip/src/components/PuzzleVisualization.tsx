@@ -16,22 +16,22 @@ import greenChipBody from "../assets/images/green-chip-body.png";
 import greenChipBox from "../assets/images/green-chip-box.png";
 import purpleChipBody from "../assets/images/purple-chip-body.png";
 import purpleChipBox from "../assets/images/purple-chip-box.png";
+import { useHorizontalScroll } from '../utils/useHorizontalScroll';
 
 export default function PuzzleVisualization(props: {
     state: SpiderState,
     animations: SpiderAnimation[],
+    animationSpeedScale: number
 }) {
     const varslotsLength = props.state.varslots.length;
-    // const numVars = varslotsLength + props.state.objs.length;
-    // const gridStyle = {
-    //     gridTemplateColumns: `repeat(${numVars}, 5em)`
-    // }
+    const scrollRef = useHorizontalScroll<HTMLDivElement>();
     const [spiderPos, setSpiderPos] = useState<number | null>(null);
     const [spiderVals, setSpiderVals] = useState<(number | string)>("")
     const [localVarSlots, setLocalVarSlots] = useState(props.state.varslots);
     const [localObjs, setLocalObjs] = useState(props.state.objs);
     const [action, setAction] = useState("");
     const intervalRef = useRef<NodeJS.Timeout | null>(null);
+    const inactiveSpiderRef = useRef<(HTMLDivElement | null)>(null);
     const spiderRefs = useRef<(HTMLDivElement | null)[]>([]);
     const chipColor = {
         stack: {body: redChipBody, box: redChipBox},
@@ -39,24 +39,29 @@ export default function PuzzleVisualization(props: {
         cmd: {body: purpleChipBody, box: purpleChipBox},
     }
 
-    useEffect(() => {
-        console.log("Effect triggered with animations:", props.animations.map(a => SpiderAnimationType[a.type]));
-    }, [props.animations]);
+    const animDuration = (dur: number) => {
+        if (props.animationSpeedScale <= 1) {
+            return 300 * dur;
+        } else if (props.animationSpeedScale === 2) {
+            return 100 * dur;
+        } else {
+            return 10 * dur;
+        }
+    }
 
     useEffect(() => {
-        if (spiderPos != null && spiderRefs.current[spiderPos]) {
-            requestAnimationFrame(() => {
-                spiderRefs.current[spiderPos]!.scrollIntoView({
-                    behavior: 'smooth',
-                })
+        if (spiderPos === null && inactiveSpiderRef.current) {
+            inactiveSpiderRef.current!.scrollIntoView({
+                behavior: 'smooth',
+            })
+        } else if (spiderPos !== null && spiderRefs.current[spiderPos]) {
+            spiderRefs.current[spiderPos]!.scrollIntoView({
+                behavior: 'smooth',
             })
         }
     }, [spiderPos])
 
     useEffect(() => {
-        // DEBUG: showing what our new animations to visualize are
-        // console.log(props.animations);
-
         if (intervalRef.current) {
             clearInterval(intervalRef.current);
         }
@@ -72,19 +77,20 @@ export default function PuzzleVisualization(props: {
 
         let step = 0;
 
+        setSpiderFromAnimation(props.animations[step]);
         intervalRef.current = setInterval(() => {
             if (step >= props.animations.length) {
                 clearInterval(intervalRef.current!);
                 setAction("");
-                setSpiderVals("")
+                setSpiderVals("");
                 intervalRef.current = null;
 
                 return;
             }
+            step++;
             setSpiderFromAnimation(props.animations[step]);
-            step += 1;
 
-        }, 600);
+        }, animDuration(6));
 
         return () => {
             if (intervalRef.current) {
@@ -92,10 +98,12 @@ export default function PuzzleVisualization(props: {
                 intervalRef.current = null;
             }
         }
+    // only want to play animations if we get a full animation change
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [props.animations]);
 
     function setSpiderFromAnimation(anim: SpiderAnimation) {
-        console.log(SpiderAnimationType[anim.type])
+        // animations have 5 units of time to work with in their setTimeouts
         switch (anim.type) {
             case SpiderAnimationType.INPUT:
                 // INPUT: show spider holding value
@@ -111,6 +119,7 @@ export default function PuzzleVisualization(props: {
                 break;
             case SpiderAnimationType.STORE:
                 // STORE: show spider putting current value into slot
+                setSpiderVals(anim.n);
                 setSpiderPos(anim.slot);
                 setAction("Writing...");
                 setTimeout(() => {
@@ -123,29 +132,28 @@ export default function PuzzleVisualization(props: {
                         };
                         return updated;
                     });
-                }, 500);
+                }, animDuration(4));
                 break;
             case SpiderAnimationType.MATH:
-                // MATH: show spider performing operation on values it is holding
                 setAction("Calculating...");
                 setSpiderVals(`${anim.left} ${anim.operator} ${anim.right}`);
                 setTimeout(() => {
                     setSpiderVals(anim.result);
-                }, 300)
+                }, animDuration(3));
                 break;
             case SpiderAnimationType.MATH_SHORTED:
                 setAction("Calculating...");
                 setSpiderVals(`${anim.left} ${anim.operator} ~~`)
                 setTimeout(() => {
                     setSpiderVals(anim.result);
-                }, 300)
+                }, animDuration(3));
                 break;
             case SpiderAnimationType.MATH_UNARY:
                 setAction("Calculating...");
                 setSpiderVals(`${anim.operator}${anim.value}`)
                 setTimeout(() => {
                     setSpiderVals(anim.result);
-                }, 300)
+                }, animDuration(3));
                 break;
             case SpiderAnimationType.OBJ_PUSH: {
                 const objIndex = localObjs.findIndex(o => o.name === anim.object)
@@ -166,8 +174,7 @@ export default function PuzzleVisualization(props: {
                         objects[objIndex] = newObj;
                         return objects;
                     });
-
-                }, 300);
+                }, animDuration(3));
                 break;
             }
             case SpiderAnimationType.OBJ_TAKE: {
@@ -187,17 +194,18 @@ export default function PuzzleVisualization(props: {
                         objects[objIndex] = newObj;
                         return objects;
                     })
-
                     setSpiderVals(anim.n)
-                }, 300)
+                }, animDuration(3));
                 break;
             }
             case SpiderAnimationType.OUTPUT:
                 setSpiderPos(null);
                 setAction("Outputting...");
+                setTimeout(() => {
+                    setSpiderVals("")
+                }, animDuration(3));
                 break;
             case SpiderAnimationType.HALT:
-                // OUTPUT or HALT: move spider to inactive pos
                 setSpiderPos(null);
                 setAction("Halted");
                 break;
@@ -206,7 +214,7 @@ export default function PuzzleVisualization(props: {
 
     return (
         <div className="viz-container">
-            <div className="viz-inner">
+            <div className="viz-inner" ref={scrollRef}>
                 <div className="label-grid">
                     {localVarSlots.map((slot, i) => (
                         <div className="label-slot" key={`var-${i}`} id={`slot-${i + 1}`}>
@@ -216,7 +224,7 @@ export default function PuzzleVisualization(props: {
                     {localObjs.map((obj, i) => {
                         return (
                             <div className="label-slot"
-                                 key={`obj-${varslotsLength + i - 1}`}
+                                 key={i}
                                  id={`slot-${props.state.varslots.length + i + 1}`}
                             >
                                 {obj.name}
@@ -226,7 +234,7 @@ export default function PuzzleVisualization(props: {
                 </div>
                 <div className="label-grid">
                     {localVarSlots.map((slot, i) => (
-                        <div className="var-slot" key={`var-${i}`} id={`slot-${i + 1}`}>
+                        <div className="var-slot" key={i} id={`slot-${i + 1}`}>
                             <div className="chip-stack">
                                 <div className="chip-bkg">
                                     <img src={blueChipBody}/>
@@ -244,7 +252,7 @@ export default function PuzzleVisualization(props: {
                         const chip = chipColor[obj.type] || chipColor["stack"];
                         return (
                             <div className="var-slot"
-                                 key={`obj-${varslotsLength + i - 1}`}
+                                 key={i}
                                  id={`slot-${props.state.varslots.length + i + 1}`}
                             >
                                 <div className="chip-stack">
@@ -254,8 +262,8 @@ export default function PuzzleVisualization(props: {
                                     <div className="chip-box">
                                         <img src={chip.box}/>
                                         <div className="obj-labels">
-                                            {obj.contents.slice(0, 3).map((v, i) => (
-                                                <div key={`obj-${varslotsLength + i - 1}`}>{v}</div>
+                                            {obj.contents.slice(0, 3).map((v, io) => (
+                                                <div key={io}>{v}</div>
                                             ))}
                                         </div>
                                     </div>
@@ -268,7 +276,7 @@ export default function PuzzleVisualization(props: {
                     {localVarSlots.map((_, i) => (
                         <div
                             className="spider-slot"
-                            key={`spider-${i}`}
+                            key={i}
                             ref={(el) => (spiderRefs.current[i] = el)}
                         >
                             {spiderPos === i && (<>
@@ -285,7 +293,7 @@ export default function PuzzleVisualization(props: {
                         return (
                             <div
                                 className="spider-slot"
-                                key={`spider-${index}`}
+                                key={index}
                                 ref={(el) => (spiderRefs.current[index] = el)}
                             >
                                 {spiderPos === index && (
@@ -301,7 +309,7 @@ export default function PuzzleVisualization(props: {
                 </div>
                 <div className="inactive-spider">
                     {spiderPos == null ? (
-                        <div className="spider-icon">
+                        <div className="spider-icon" ref={inactiveSpiderRef}>
                             <FontAwesomeIcon icon={faSpider} size={"2xl"}/>
                             <div className="spider-val-line">{spiderVals}</div>
                             <p>{action}</p>
@@ -311,8 +319,8 @@ export default function PuzzleVisualization(props: {
                 <div className="inputs-container">
                     <h3>Inputs:</h3>
                     <div className="inputs-value">
-                        {props.state.input.map((v) => (
-                            <span>{v}</span>
+                        {props.state.input.map((v, i) => (
+                            <span key={i}>{v}</span>
                         ))}
                     </div>
                 </div>
