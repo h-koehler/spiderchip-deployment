@@ -1,6 +1,6 @@
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faSpider } from '@fortawesome/free-solid-svg-icons'
-import { useEffect, useRef, useState } from "react";
+import {FontAwesomeIcon} from '@fortawesome/react-fontawesome'
+import {faSpider} from '@fortawesome/free-solid-svg-icons'
+import {useEffect, useRef, useState} from "react";
 import {
     SpiderAnimation,
     SpiderAnimationType,
@@ -8,16 +8,18 @@ import {
     SpiderState,
 } from "../language-system/ls-interface-types"
 import "./PuzzleVisualization.css"
+import blueChipBody from "../assets/images/blue-chip-body.png";
+import blueChipBox from "../assets/images/blue-chip-box.png";
 
 export default function PuzzleVisualization(props: {
     state: SpiderState,
     animations: SpiderAnimation[],
 }) {
     const varslotsLength = props.state.varslots.length;
-    const numVars = varslotsLength + props.state.objs.length;
-    const gridStyle = {
-        gridTemplateColumns: `repeat(${numVars}, 5em)`
-    }
+    // const numVars = varslotsLength + props.state.objs.length;
+    // const gridStyle = {
+    //     gridTemplateColumns: `repeat(${numVars}, 5em)`
+    // }
     const [spiderPos, setSpiderPos] = useState<number | null>(null);
     const [spiderVals, setSpiderVals] = useState<number[]>([])
     const [currentStep, setCurrentStep] = useState(0);
@@ -196,34 +198,62 @@ export default function PuzzleVisualization(props: {
     return (
         <div className="viz-container">
             <div className="viz-inner">
-                <div className="scroll-wrapper">
-                    <div className="slot-grid" style={gridStyle}>
-                        {localVarSlots.map((slot, i) => (
-                            <div className="var-slot filled" key={`var-${i}`} id={`slot-${i + 1}`}>
-                                <div>{slot.value}</div>
-                                <div>{slot.name}</div>
+                <div className="slot-grid">
+                    {localVarSlots.map((slot, i) => (
+                        <div className="var-slot" key={`var-${i}`} id={`slot-${i + 1}`}>
+                            <div className="chip-stack">
+                                <div className="chip-bkg">
+                                    <img src={blueChipBody}/>
+                                </div>
+                                <div className="chip-box">
+                                    <img src={blueChipBox}/>
+                                    <div className="chip-labels">
+                                        <div>{slot.value}</div>
+                                        <div>{slot.name}</div>
+                                    </div>
+                                </div>
                             </div>
-                        ))}
-                        {localObjs.map((obj, i) => (
-                            <div className="var-slot filled" key={`obj-${varslotsLength + i - 1}`}
-                                id={`slot-${props.state.varslots.length + i + 1}`}>
-                                {obj.contents.slice(0, 3).map((v, i) => (
-                                    <div key={`obj-${varslotsLength + i - 1}`}>{v}</div>
-                                ))}
-                                <div>{obj.name}</div>
-                            </div>
-                        ))}
-                    </div>
-                    <div className="spider-grid" style={gridStyle}>
-                        {localVarSlots.map((_, i) => (
+                        </div>
+                    ))}
+                    {localObjs.map((obj, i) => (
+                        <div className="obj-slot filled" key={`obj-${varslotsLength + i - 1}`}
+                             id={`slot-${props.state.varslots.length + i + 1}`}>
+                            {obj.contents.slice(0, 3).map((v, i) => (
+                                <div key={`obj-${varslotsLength + i - 1}`}>{v}</div>
+                            ))}
+                            <div>{obj.name}</div>
+                        </div>
+                    ))}
+                </div>
+                <div className="spider-grid">
+                    {localVarSlots.map((_, i) => (
+                        <div
+                            className="spider-slot"
+                            key={`spider-${i}`}
+                            ref={(el) => (spiderRefs.current[i] = el)}
+                        >
+                            {spiderPos === i && (<>
+                                <div className="spider-icon">
+                                    <FontAwesomeIcon icon={faSpider} size={"2xl"}/>
+                                    {spiderVals.slice(0, 3).map((v, i) => (
+                                        <div key={i} className="spider-val-line">{v}</div>
+                                    ))}
+                                </div>
+                                <p>{action}</p>
+                            </>)}
+                        </div>
+                    ))}
+                    {localObjs.map((_, i) => {
+                        const index = varslotsLength + i;
+                        return (
                             <div
                                 className="spider-slot"
-                                key={`spider-${i}`}
-                                ref={(el) => (spiderRefs.current[i] = el)}
+                                key={`spider-${index}`}
+                                ref={(el) => (spiderRefs.current[index] = el)}
                             >
-                                {spiderPos === i && (<>
+                                {spiderPos === index && (<>
                                     <div className="spider-icon">
-                                        <FontAwesomeIcon icon={faSpider} size={"2xl"} />
+                                        <FontAwesomeIcon icon={faSpider} size={"2xl"}/>
                                         {spiderVals.slice(0, 3).map((v, i) => (
                                             <div key={i} className="spider-val-line">{v}</div>
                                         ))}
@@ -231,33 +261,13 @@ export default function PuzzleVisualization(props: {
                                     <p>{action}</p>
                                 </>)}
                             </div>
-                        ))}
-                        {localObjs.map((_, i) => {
-                            const index = varslotsLength + i;
-                            return (
-                                <div
-                                    className="spider-slot"
-                                    key={`spider-${index}`}
-                                    ref={(el) => (spiderRefs.current[index] = el)}
-                                >
-                                    {spiderPos === index && (<>
-                                        <div className="spider-icon">
-                                            <FontAwesomeIcon icon={faSpider} size={"2xl"} />
-                                            {spiderVals.slice(0, 3).map((v, i) => (
-                                                <div key={i} className="spider-val-line">{v}</div>
-                                            ))}
-                                        </div>
-                                        <p>{action}</p>
-                                    </>)}
-                                </div>
-                            );
-                        })}
-                    </div>
+                        );
+                    })}
                 </div>
                 <div className="inactive-spider">
                     {spiderPos == null ? (<>
                         <div className="spider-icon">
-                            <FontAwesomeIcon icon={faSpider} size={"2xl"} />
+                            <FontAwesomeIcon icon={faSpider} size={"2xl"}/>
                             {spiderVals.slice(0, 3).map((v, i) => (
                                 <div key={i} className="spider-val-line">{v}</div>
                             ))}
