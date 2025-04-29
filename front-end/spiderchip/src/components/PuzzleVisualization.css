@@ -1,53 +1,179 @@
 .viz-container {
+    height: 100%;
+    position: relative;
+}
+
+.viz-inner {
     padding: 2em;
-    display: flex;
-    flex-direction: column;
-    gap: 1em;
-    align-items: center;
-    justify-content: center;
-}
-
-.slot-grid {
-    display: grid;
-    gap: 1em;
-    grid-template-rows: repeat(1, 5em);
-    justify-content: center;
-}
-
-.slot-grid > .var-slot {
+    display: block;
+    margin: auto;
     text-align: center;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    background: white
+    height: 100%;
+    box-sizing: border-box;
+    position: relative;
+    overflow: auto;
 }
 
 .spider-grid {
     display: grid;
     gap: 1em;
-    grid-template-rows: repeat(1, 5em);
-    justify-content: center;
+    grid-auto-flow: column;
+    grid-auto-columns: 7.5em;
+    justify-content: start;
+    margin-bottom: 1em;
+    width: fit-content;
 }
 
-.spider-grid > .spider-slot{
-    width: 5em;
+.label-grid {
+    display: grid;
+    gap: 1em;
+    grid-auto-flow: column;
+    grid-auto-columns: 7.5em;
+    justify-content: start;
+    margin-bottom: 1em;
+    width: fit-content;
+}
+
+.label-slot {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    position: relative;
+    width: 100%;
+    height: auto;
+    font-size: 1.2em;
+}
+
+.var-slot {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    position: relative;
+    width: 7.5em;
     height: 5em;
 }
 
-.inactive-spider {
-    width: 5em;
+.chip-stack {
+    position: relative;
+    width: 7.5em;
     height: 5em;
 }
 
-.inactive-spider > .spider-icon,
-.spider-slot > .spider-icon {
+.chip-bkg > img {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 7.5em;
+    height: 5em;
+}
+
+.chip-box > img {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 4.3em;
+    height: 4.3em;
+}
+
+.chip-box {
+    position: relative;
+    width: 100%;
+    height: 100%;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    background: rgb(128, 0, 0);
-    width: 100%;
-    height: 100%;
+
+}
+
+.chip-labels {
     color: white;
+    z-index: 2;
+    position: relative;
+    text-align: center;
+    font-size: 2em;
+}
+
+.obj-labels {
+    color: white;
+    z-index: 2;
+    position: relative;
+    text-align: center;
+    font-size: 1.1em;
+}
+
+.spider-grid > .spider-slot{
+    width: 7.5em;
+    height: 5em;
+}
+
+.inactive-spider {
+    width: 7.5em;
+    height: 3em;
+    margin: auto auto 2em;
+}
+
+.spider-icon {
+    position: relative;
+    width: 7.5em;
+    height: auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    text-align: center;
+}
+
+.spider-icon img {
+    width: 100%;
+    height: auto;
+    display: block;
+}
+
+.spider-label {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 1;
+    color: white;
+}
+
+.inputs-container {
+    margin-top: auto;
+    min-width: 10em;
+    height: 5em;
+    background: lightskyblue;
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 1em;
+    align-items: start;
+    justify-content: left;
+    text-align: left;
+    padding: 1em;
+    width: fit-content;
+    border-top: .1em solid #E0E0E0;
+    border-left: .1em solid #E0E0E0;
+    border-right: .1em solid #808080;
+    border-bottom: .1em solid #808080;
+    box-shadow:
+            .1em 0 black,
+            0 .1em black,
+            .1em .1em black,
+            -.1em 0 white,
+            0 -.1em white,
+            -.1em -.1em white;
+}
+
+.inputs-container {
+    font-size: .8em;
+}
+
+.inputs-value {
+    display: flex;
+    flex-direction: row;
+    gap: 1em;
+    font-size: 1.8em;
 }
