@@ -10,6 +10,12 @@ import {
 import "./PuzzleVisualization.css"
 import blueChipBody from "../assets/images/blue-chip-body.png";
 import blueChipBox from "../assets/images/blue-chip-box.png";
+import redChipBody from "../assets/images/red-chip-body.png";
+import redChipBox from "../assets/images/red-chip-box.png";
+import greenChipBody from "../assets/images/green-chip-body.png";
+import greenChipBox from "../assets/images/green-chip-box.png";
+import purpleChipBody from "../assets/images/purple-chip-body.png";
+import purpleChipBox from "../assets/images/purple-chip-box.png";
 
 export default function PuzzleVisualization(props: {
     state: SpiderState,
@@ -28,6 +34,11 @@ export default function PuzzleVisualization(props: {
     const [action, setAction] = useState("");
     const intervalRef = useRef<NodeJS.Timeout | null>(null);
     const spiderRefs = useRef<(HTMLDivElement | null)[]>([]);
+    const chipColor = {
+        stack: { body: redChipBody, box: redChipBox},
+        queue: { body: greenChipBody, box: greenChipBox},
+        cmd: { body: purpleChipBody, box: purpleChipBox},
+    }
 
     useEffect(() => {
         console.log("Effect triggered with animations:", props.animations.map(a => SpiderAnimationType[a.type]));
@@ -215,15 +226,30 @@ export default function PuzzleVisualization(props: {
                             </div>
                         </div>
                     ))}
-                    {localObjs.map((obj, i) => (
-                        <div className="obj-slot filled" key={`obj-${varslotsLength + i - 1}`}
-                             id={`slot-${props.state.varslots.length + i + 1}`}>
-                            {obj.contents.slice(0, 3).map((v, i) => (
-                                <div key={`obj-${varslotsLength + i - 1}`}>{v}</div>
-                            ))}
-                            <div>{obj.name}</div>
-                        </div>
-                    ))}
+                    {localObjs.map((obj, i) => {
+                        const chip = chipColor[obj.type] || chipColor["stack"];
+                        return (
+                            <div className="var-slot"
+                                 key={`obj-${varslotsLength + i - 1}`}
+                                 id={`slot-${props.state.varslots.length + i + 1}`}
+                            >
+                                <div className="chip-stack">
+                                    <div className="chip-bkg">
+                                        <img src={chip.body}/>
+                                    </div>
+                                    <div className="chip-box">
+                                        <img src={chip.box}/>
+                                        <div className="chip-labels">
+                                            {obj.contents.slice(0, 3).map((v, i) => (
+                                                <div key={`obj-${varslotsLength + i - 1}`}>{v}</div>
+                                            ))}
+                                            <div>{obj.name}</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        );
+                    })}
                 </div>
                 <div className="spider-grid">
                     {localVarSlots.map((_, i) => (
