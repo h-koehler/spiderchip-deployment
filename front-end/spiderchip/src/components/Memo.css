@@ -1,3 +1,7 @@
+.memo-page {
+    margin: 1em;
+}
+
 .memo-container {
     position: relative;
 	display: flex;

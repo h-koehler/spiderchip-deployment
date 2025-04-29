@@ -4,11 +4,13 @@ import paperCorner from "../assets/images/paper-corner.svg";
 
 const Memo = ({children}: {children: React.ReactNode}) => {
     return (
-        <div className="memo-container">
-            <div className="content-overlay">
-                {children}
+        <div className="memo-page">
+            <div className="memo-container">
+                <div className="content-overlay">
+                    {children}
+                </div>
+                <img className="memo-corner" src={paperCorner}/>
             </div>
-            <img className="memo-corner" src={paperCorner}/>
         </div>
     );
 };
