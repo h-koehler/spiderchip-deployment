@@ -365,19 +365,20 @@ export default function PuzzleUI() {
                         <img src={MenuIcon} />
                         Menu
                     </button>
-                    <button className="run-button" onClick={runCode}>
+                    <button className="run-button" onClick={runCode} disabled={isAnimating}>
                         <img src={PlayIcon} />
                         Run
                     </button>
-                    <button className="step-button" onClick={stepCode}>
+                    <button className="step-button" onClick={stepCode} disabled={isAnimating}>
                         <img src={StepIcon} />
                         Step
                     </button>
-                    <button className="hint-button" onClick={() => setShowHints(!showHints)}>
+                    {/* TODO: show hints upon pressing this button */}
+                    <button className="hint-button" disabled={isAnimating} onClick={() => setShowHints(!showHints)}>
                         <img src={HintIcon} />
                         Hint
                     </button>
-                    <button className="reset-button" onClick={resetCode}>
+                    <button className="reset-button" onClick={resetCode} disabled={isAnimating}>
                         <img src={ResetIcon} />
                         Reset
                     </button>
@@ -391,7 +392,7 @@ export default function PuzzleUI() {
                         {debugVis ? "Use Animated View" : "Use Clean View"}
                     </button>
                 </div>
-                {rtState && !debugVis && <PuzzleVisualization state={rtState} animations={anims} />}
+                {rtState && !debugVis && <PuzzleVisualization state={rtState} animations={anims} setIsAnimating={setIsAnimating}/>}
                 {rtState && debugVis && <DebugPuzzleVisualization state={rtState} />}
             </div>
             <div className="output-container">
