@@ -1,7 +1,6 @@
 .viz-container {
     height: 100%;
-    overflow-y: auto;
-    position: relative; /* delete? */
+    position: relative;
 }
 
 .viz-inner {
@@ -12,16 +11,12 @@
     height: 100%;
     box-sizing: border-box;
     position: relative;
+    overflow: auto;
 }
 
 .scroll-wrapper {
-    overflow-x: auto;
-    width: 100%;
     position: relative;
-}
-
-.scrollable-content {
-    display: inline-block;
+    width: fit-content;
 }
 
 .slot-grid,
