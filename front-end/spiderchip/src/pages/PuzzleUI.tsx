@@ -64,8 +64,6 @@ export default function PuzzleUI() {
     const savedCode = useRef<string>("");
     const [initialVars, setInitialVars] = useState<LT.CustomSlot[]>([]);
 
-    const [isAnimating, setIsAnimating] = useState(false);
-
     useEffect(() => {
         const handleKeypress = (event: KeyboardEvent) => {
             if (event.key === "Escape") {
@@ -365,20 +363,20 @@ export default function PuzzleUI() {
                         <img src={MenuIcon} />
                         Menu
                     </button>
-                    <button className="run-button" onClick={runCode} disabled={isAnimating}>
+                    <button className="run-button" onClick={runCode}>
                         <img src={PlayIcon} />
                         Run
                     </button>
-                    <button className="step-button" onClick={stepCode} disabled={isAnimating}>
+                    <button className="step-button" onClick={stepCode}>
                         <img src={StepIcon} />
                         Step
                     </button>
                     {/* TODO: show hints upon pressing this button */}
-                    <button className="hint-button" disabled={isAnimating} onClick={() => setShowHints(!showHints)}>
+                    <button className="hint-button" onClick={() => setShowHints(!showHints)}>
                         <img src={HintIcon} />
                         Hint
                     </button>
-                    <button className="reset-button" onClick={resetCode} disabled={isAnimating}>
+                    <button className="reset-button" onClick={resetCode}>
                         <img src={ResetIcon} />
                         Reset
                     </button>
@@ -392,7 +390,7 @@ export default function PuzzleUI() {
                         {debugVis ? "Use Animated View" : "Use Clean View"}
                     </button>
                 </div>
-                {rtState && !debugVis && <PuzzleVisualization state={rtState} animations={anims} setIsAnimating={setIsAnimating}/>}
+                {rtState && !debugVis && <PuzzleVisualization state={rtState} animations={anims}/>}
                 {rtState && debugVis && <DebugPuzzleVisualization state={rtState} />}
             </div>
             <div className="output-container">

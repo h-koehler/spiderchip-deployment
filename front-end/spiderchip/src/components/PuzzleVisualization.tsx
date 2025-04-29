@@ -12,7 +12,6 @@ import "./PuzzleVisualization.css"
 export default function PuzzleVisualization(props: {
     state: SpiderState,
     animations: SpiderAnimation[],
-    setIsAnimating: (val: boolean) => void,
 }) {
     const varslotsLength = props.state.varslots.length;
     const numVars = varslotsLength + props.state.objs.length;
@@ -22,23 +21,31 @@ export default function PuzzleVisualization(props: {
     const [spiderPos, setSpiderPos] = useState<number | null>(null);
     const [spiderVals, setSpiderVals] = useState<number[]>([])
     const [currentStep, setCurrentStep] = useState(0);
-    const [localVarSlots, setLocalVarSlots] = useState(props.state.varslots)
+    const [localVarSlots, setLocalVarSlots] = useState(props.state.varslots);
     const [localObjs, setLocalObjs] = useState(props.state.objs);
+    const [action, setAction] = useState("");
     const intervalRef = useRef<NodeJS.Timeout | null>(null);
+    const spiderRefs = useRef<(HTMLDivElement | null)[]>([]);
 
     useEffect(() => {
         console.log("Effect triggered with animations:", props.animations.map(a => SpiderAnimationType[a.type]));
     }, [props.animations]);
 
+    useEffect(() => {
+        if (spiderPos != null && spiderRefs.current[spiderPos]) {
+            requestAnimationFrame(() => {
+                spiderRefs.current[spiderPos]!.scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'start',
+                    inline: 'center',
+                })
+            })
+        }
+    }, [spiderPos])
 
     useEffect(() => {
         // DEBUG: showing what our new animations to visualize are
         // console.log(props.animations);
-        // console.log("local:", localObjs);
-        // console.log("props:", props.state.objs);
-        // console.log("spiderPos:", spiderPos);
-        // console.log(props.state.varslots);
-        // console.log(localVarSlots);
 
         if (intervalRef.current) {
             clearInterval(intervalRef.current);
@@ -48,6 +55,7 @@ export default function PuzzleVisualization(props: {
             setSpiderPos(null);
             setSpiderVals([])
             setCurrentStep(0);
+            setAction("");
             setLocalVarSlots([...props.state.varslots]);
             setLocalObjs([...props.state.objs]);
             return;
@@ -56,18 +64,16 @@ export default function PuzzleVisualization(props: {
         let step = 0;
         setCurrentStep(step);
 
-        props.setIsAnimating(true);
-
         intervalRef.current = setInterval(() => {
             if (step >= props.animations.length) {
                 clearInterval(intervalRef.current!);
+                setAction("");
                 intervalRef.current = null;
-                props.setIsAnimating(false);
 
                 return;
             }
             setSpiderFromAnimation(props.animations[step]);
-            setCurrentStep(step)
+            setCurrentStep(step);
             step += 1;
 
         }, 600);
@@ -91,15 +97,18 @@ export default function PuzzleVisualization(props: {
                     return newVals;
                 });
                 setSpiderPos(null);
+                setAction("Inputting...");
                 break;
             case SpiderAnimationType.LOAD:
                 // LOAD: show spider getting value from slot
                 setSpiderVals((prev) => [...prev, anim.n]);
                 setSpiderPos(anim.slot);
+                setAction("Reading...");
                 break;
             case SpiderAnimationType.STORE:
                 // STORE: show spider putting current value into slot
                 setSpiderPos(anim.slot);
+                setAction("Writing...");
                 setTimeout(() => {
                     setSpiderVals((prev) => {
                         const newVals = [...prev];
@@ -119,12 +128,16 @@ export default function PuzzleVisualization(props: {
                 break;
             case SpiderAnimationType.MATH:
                 // MATH: show spider performing operation on values it is holding
-                setSpiderVals([anim.result])
+                setAction("Calculating...");
+                setTimeout(() => {
+                    setSpiderVals([anim.result]);
+                }, 300)
                 break;
             case SpiderAnimationType.OBJ_PUSH: {
                 const objIndex = localObjs.findIndex(o => o.name === anim.object)
                 const gridIndex = varslotsLength + objIndex
-                setSpiderPos(gridIndex)
+                setSpiderPos(gridIndex);
+                setAction("Pushing...");
                 setTimeout(() => {
                     setSpiderVals((prev) => {
                         const newVals = [...prev];
@@ -150,7 +163,8 @@ export default function PuzzleVisualization(props: {
             case SpiderAnimationType.OBJ_TAKE: {
                 const objIndex = localObjs.findIndex(o => o.name === anim.object)
                 const gridIndex = varslotsLength + objIndex;
-                setSpiderPos(gridIndex)
+                setSpiderPos(gridIndex);
+                setAction("Taking...");
                 setTimeout(() => {
                     setLocalObjs((prev) => {
                         const objects = [...prev];
@@ -176,6 +190,7 @@ export default function PuzzleVisualization(props: {
             case SpiderAnimationType.HALT:
                 // OUTPUT or HALT: move spider to inactive pos
                 setSpiderPos(null);
+                setAction("Halted");
                 break;
         }
     }
@@ -183,58 +198,76 @@ export default function PuzzleVisualization(props: {
     return (
         <div className="viz-container">
             <div className="viz-inner">
-                <div className="slot-grid" style={gridStyle}>
-                    {localVarSlots.map((slot, i) => (
-                        <div className="var-slot filled" key={`var-${i}`} id={`slot-${i + 1}`}>
-                            <div>{slot.value}</div>
-                            <div>{slot.name}</div>
-                        </div>
-                    ))}
-                    {localObjs.map((obj, i) => (
-                        <div className="var-slot filled" key={`obj-${varslotsLength + i - 1}`}
-                             id={`slot-${props.state.varslots.length + i + 1}`}>
-                            {obj.contents.map((v, i) => (
-                                <div key={`obj-${varslotsLength + i - 1}`}>{v}</div>
+                <div className="scroll-wrapper">
+                    <div className="scrollable-content">
+                        <div className="slot-grid" style={gridStyle}>
+                            {localVarSlots.map((slot, i) => (
+                                <div className="var-slot filled" key={`var-${i}`} id={`slot-${i + 1}`}>
+                                    <div>{slot.value}</div>
+                                    <div>{slot.name}</div>
+                                </div>
                             ))}
-                            <div>{obj.name}</div>
-                        </div>
-                    ))}
-                </div>
-                <div className="spider-grid" style={gridStyle}>
-                    {localVarSlots.map((_, i) => (
-                        <div className="spider-slot" key={`spider-${i}`}>
-                            {spiderPos === i && (
-                                <div className="spider-icon">
-                                    <FontAwesomeIcon icon={faSpider} size={"2xl"}/>
-                                    {spiderVals.slice(0, 3).map((v, i) => (
-                                        <div key={i} className="spider-val-line">{v}</div>
+                            {localObjs.map((obj, i) => (
+                                <div className="var-slot filled" key={`obj-${varslotsLength + i - 1}`}
+                                     id={`slot-${props.state.varslots.length + i + 1}`}>
+                                    {obj.contents.slice(0, 3).map((v, i) => (
+                                        <div key={`obj-${varslotsLength + i - 1}`}>{v}</div>
                                     ))}
+                                    <div>{obj.name}</div>
                                 </div>
-                            )}
+                            ))}
                         </div>
-                    ))}
-                    {localObjs.map((_, i) => (
-                        <div className="spider-slot" key={`spider-${varslotsLength + i}`}>
-                            {spiderPos === varslotsLength + i && (
-                                <div className="spider-icon">
-                                    <FontAwesomeIcon icon={faSpider} size={"2xl"}/>
-                                    {spiderVals.slice(0, 3).map((v, i) => (
-                                        <div key={varslotsLength + i} className="spider-val-line">{v}</div>
-                                    ))}
+                        <div className="spider-grid" style={gridStyle}>
+                            {localVarSlots.map((_, i) => (
+                                <div
+                                    className="spider-slot"
+                                    key={`spider-${i}`}
+                                    ref={(el) => (spiderRefs.current[i] = el)}
+                                >
+                                    {spiderPos === i && (<>
+                                        <div className="spider-icon">
+                                            <FontAwesomeIcon icon={faSpider} size={"2xl"}/>
+                                            {spiderVals.slice(0, 3).map((v, i) => (
+                                                <div key={i} className="spider-val-line">{v}</div>
+                                            ))}
+                                        </div>
+                                        <p>{action}</p>
+                                    </>)}
                                 </div>
-                            )}
+                            ))}
+                            {localObjs.map((_, i) => {
+                                const index = varslotsLength + i;
+                                return (
+                                    <div
+                                        className="spider-slot"
+                                        key={`spider-${index}`}
+                                        ref={(el) => (spiderRefs.current[i] = el)}
+                                    >
+                                        {spiderPos === index && (<>
+                                            <div className="spider-icon">
+                                                <FontAwesomeIcon icon={faSpider} size={"2xl"}/>
+                                                {spiderVals.slice(0, 3).map((v, i) => (
+                                                    <div key={index} className="spider-val-line">{v}</div>
+                                                ))}
+                                            </div>
+                                            <p>{action}</p>
+                                        </>)}
+                                    </div>
+                                );
+                            })}
                         </div>
-                    ))}
+                    </div>
                 </div>
                 <div className="inactive-spider">
-                    { spiderPos == null ? (
+                    {spiderPos == null ? (<>
                         <div className="spider-icon">
                             <FontAwesomeIcon icon={faSpider} size={"2xl"}/>
                             {spiderVals.slice(0, 3).map((v, i) => (
                                 <div key={i} className="spider-val-line">{v}</div>
                             ))}
                         </div>
-                    ) : null}
+                        <p>{action}</p>
+                    </>) : null}
                 </div>
                 <div className="inputs-container">
                     {props.state.input.map((v) => (

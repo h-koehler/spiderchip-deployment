@@ -1,24 +1,40 @@
 .viz-container {
     height: 100%;
     overflow-y: auto;
+    position: relative; /* delete? */
 }
 
 .viz-inner {
     padding: 2em;
-    display: flex;
-    flex-direction: column;
-    gap: 1em;
-    align-items: center;
-    justify-content: flex-start;
+    display: block;
+    margin: auto;
+    text-align: center;
     height: 100%;
     box-sizing: border-box;
+    position: relative;
 }
 
-.slot-grid {
+.scroll-wrapper {
+    overflow-x: auto;
+    width: 100%;
+    position: relative;
+}
+
+.scrollable-content {
+    display: inline-block;
+}
+
+.slot-grid,
+.spider-grid {
     display: grid;
     gap: 1em;
     grid-template-rows: repeat(1, 5em);
     justify-content: center;
+    margin-bottom: 1em;
+}
+
+.spider-grid {
+    margin-bottom: 2em;
 }
 
 .slot-grid > .var-slot {
@@ -30,13 +46,6 @@
     background: white
 }
 
-.spider-grid {
-    display: grid;
-    gap: 1em;
-    grid-template-rows: repeat(1, 5em);
-    justify-content: center;
-}
-
 .spider-grid > .spider-slot{
     width: 5em;
     height: 5em;
@@ -45,6 +54,7 @@
 .inactive-spider {
     width: 5em;
     height: 5em;
+    margin: auto auto 2em;
 }
 
 .inactive-spider > .spider-icon,
