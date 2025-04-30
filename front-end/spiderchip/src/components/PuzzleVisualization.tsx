@@ -79,6 +79,7 @@ export default function PuzzleVisualization(props: {
 
         setSpiderFromAnimation(props.animations[step]);
         intervalRef.current = setInterval(() => {
+            step++;
             if (step >= props.animations.length) {
                 clearInterval(intervalRef.current!);
                 setAction("");
@@ -87,7 +88,6 @@ export default function PuzzleVisualization(props: {
 
                 return;
             }
-            step++;
             setSpiderFromAnimation(props.animations[step]);
 
         }, animDuration(6));
@@ -213,8 +213,8 @@ export default function PuzzleVisualization(props: {
     }
 
     return (
-        <div className="viz-container">
-            <div className="viz-inner" ref={scrollRef}>
+        <div className="viz-container" ref={scrollRef}>
+            <div className="viz-inner">
                 <div className="label-grid">
                     {localVarSlots.map((slot, i) => (
                         <div className="label-slot" key={`var-${i}`} id={`slot-${i + 1}`}>

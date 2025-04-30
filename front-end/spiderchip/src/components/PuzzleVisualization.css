@@ -1,17 +1,18 @@
 .viz-container {
-    height: 100%;
     position: relative;
+    overflow: auto;
+    flex-grow: 1;
 }
 
 .viz-inner {
-    padding: 2em;
+    padding: 1em;
     display: block;
     margin: auto;
     text-align: center;
-    height: 100%;
+    height: fit-content;
+    width: fit-content;
     box-sizing: border-box;
     position: relative;
-    overflow: auto;
 }
 
 .spider-grid {
@@ -111,7 +112,7 @@
 .inactive-spider {
     width: 7.5em;
     height: 3em;
-    margin: auto auto 2em;
+    margin: auto auto 2em 2em;
 }
 
 .spider-icon {
