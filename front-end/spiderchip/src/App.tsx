@@ -20,6 +20,7 @@ function App() {
                 <Route path='/story/' element={<Navigate to="/level-select" replace />} />
                 <Route path="/about" element={<About />} />
                 <Route path="/about/language" element={<LanguageExplanation />} />
+                <Route path="*" element={<Navigate to="/" replace/>} />
             </Routes>
         </Router>
     );
