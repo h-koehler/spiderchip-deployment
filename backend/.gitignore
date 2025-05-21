@@ -1,4 +1,0 @@
-dist
-backend/prisma/migrations/
-backend/puzzles/
-node_modules/
