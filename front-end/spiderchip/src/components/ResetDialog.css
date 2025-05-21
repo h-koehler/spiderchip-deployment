@@ -1,11 +1,11 @@
-.menu-overlay {
+.reset-container {
     position: absolute;
     height: 100vh;
     width: 100%;
     background: rgba(0, 0, 0, 0.5);
 }
 
-.pause-menu {
+.reset-menu {
     position: fixed;
     top: 50%;
     left: 50%;
@@ -16,17 +16,19 @@
     border-left: .2em solid white;
     border-right: .2em solid black;
     border-bottom: .2em solid black;
+    display: flex;
+    flex-direction: column;
+    gap: .5em;
 }
 
-.buttons {
+.reset-content {
     display: flex;
     flex-direction: column;
     gap: 1em;
-    padding: 1.5em 2em;
+    padding: .5em;
+    text-align: center;
 }
 
-.buttons .primary-button {
-    font-family: var(--title-font-family), serif;
-    font-size: 1.5em;
-    text-align: center;
+.reset-content p {
+    font-size: 1.25em;
 }

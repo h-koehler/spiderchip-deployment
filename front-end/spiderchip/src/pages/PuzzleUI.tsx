@@ -203,7 +203,7 @@ export default function PuzzleUI() {
 
     const menuClickedQuit = () => {
         saveProgress();
-        navigate("/level-select");
+        navigate(-1);
     }
 
     /**
@@ -438,7 +438,13 @@ export default function PuzzleUI() {
                     <PuzzleDetails extraClass={bigDetails ? "big-details" : ""} description={level.description} />}
             </div>
 
-            {menuIsOpen && <PuzzlePauseMenu onResume={() => toggleMenu()} onQuit={() => menuClickedQuit()} />}
+            {menuIsOpen &&
+                <PuzzlePauseMenu
+                    onResume={() => toggleMenu()}
+                    onQuit={() => menuClickedQuit()}
+                    levelOrSand={puzzleId === "sandbox" ? "" : "SAVE & "}
+                />
+            }
         </div>
     )
 }

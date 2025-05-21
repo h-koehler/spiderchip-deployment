@@ -45,9 +45,9 @@ const About: React.FC = () => {
             <div className="button-row">
                 <button
                     className="primary-button"
-                    onClick={() => navigate('/')}
+                    onClick={() => navigate(-1)}
                 >
-                    Back Home
+                    Back
                 </button>
                 <button
                     className="primary-button"

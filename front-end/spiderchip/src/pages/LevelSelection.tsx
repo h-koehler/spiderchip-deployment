@@ -10,6 +10,7 @@ import {getAllPuzzles} from "../components/PuzzleDefinitions.ts";
 import {useHorizontalScroll} from "../utils/useHorizontalScroll.tsx";
 import {getAllStoryBeats} from "../components/StoryDefinitions.ts";
 import {useNavigate} from "react-router-dom";
+import ResetDialog from "../components/ResetDialog.tsx";
 
 // type LevelStatusDict = {
 //     levelId: number,
@@ -23,6 +24,7 @@ export default function LevelSelection() {
     const [selectedLevel, setLocalSelectedLevel] = useState<LevelItem | null>(null);
     const [popupContentLevel, setPopUpContentLevel] = useState<LevelItem | null>(null);
     const [dropdownVisible, setDropdownVisible] = useState(false);
+    const [resetMenuOpen, setResetMenuOpen] = useState(false);
     const navigate = useNavigate();
     const scrollRef = useHorizontalScroll<HTMLDivElement>();
     const popupRef = useRef<HTMLDivElement>(null);
@@ -74,6 +76,8 @@ export default function LevelSelection() {
                 const parent = originalAllItems.find(p => p.type === LevelItemType.PUZZLE && p.id === l.level);
                 if (parent && (parent.status === LevelStatus.COMPLETED || parent.status === LevelStatus.SKIPPED)) {
                     return { ...l, status: LevelStatus.AVAILABLE };
+                } else if (!parent) {
+                    return { ...l, status: LevelStatus.AVAILABLE };
                 } else {
                     return { ...l, status: LevelStatus.LOCKED };
                 }
@@ -88,9 +92,6 @@ export default function LevelSelection() {
     }
 
     useEffect(() => {
-        // if (!localStorage.getItem(LEVEL_LIST_KEY)) {
-        //     localStorage.setItem(LEVEL_LIST_KEY, JSON.stringify(loadLevels()));
-        // }
         setLevelList(loadLevels());
     }, []);
 
@@ -137,7 +138,8 @@ export default function LevelSelection() {
         navigate("/puzzle/sandbox");
     }
 
-    const handleLogOut = () => {
+    const handleReset = () => {
+        localStorage.clear();
         navigate("/");
     }
 
@@ -145,11 +147,15 @@ export default function LevelSelection() {
         const handleClickOutside = (event: MouseEvent) => {
             const popUp = document.querySelector(".puzzle-details-window");
             const dropdown = document.querySelector(".dropdown-menu")
+            const resetDialog = document.querySelector(".reset-menu")
             if (popUp && !popUp.contains(event.target as Node)) {
                 setLocalSelectedLevel(null);
             }
             if (dropdown && !dropdown.contains(event.target as Node)) {
                 setDropdownVisible(false);
+            }
+            if (resetDialog && !resetDialog.contains(event.target as Node)) {
+                setResetMenuOpen(false);
             }
         };
 
@@ -177,7 +183,7 @@ export default function LevelSelection() {
                             <button onClick={handleSandbox}>Sandbox</button>
                         </li>
                         <li>
-                            <button onClick={handleLogOut}>Log Out</button>
+                            <button onClick={() => setResetMenuOpen(true)}>Reset Progress</button>
                         </li>
                     </ul>
                 )}
@@ -215,6 +221,13 @@ export default function LevelSelection() {
                     )}
                 </div>
             </CSSTransition>
+
+            {resetMenuOpen &&
+                <ResetDialog
+                    onYes={() => handleReset()}
+                    onNo={() => setResetMenuOpen(false)}
+                />
+            }
         </div>
     )
 }
