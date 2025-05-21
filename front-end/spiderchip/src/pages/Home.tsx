@@ -1,26 +1,17 @@
 import './Home.css';
-import { useState } from "react";
-import AuthModal from "../components/AuthModal";
 import { useNavigate } from 'react-router-dom';
 import Logo from "../assets/images/logo.svg";
-import { isAuthenticated } from '../services/api';
 
 const Home = () => {
-  const [isModalOpen, setIsModalOpen] = useState(false);
   const navigate = useNavigate()
 
   const handleStartClick = () => {
-    if (isAuthenticated()) {
       navigate("/game");
-    } else {
-      setIsModalOpen(true);
-    }
   };
 
-    const handleAboutClick = () => {
+  const handleAboutClick = () => {
         navigate("/about");
-    }
-
+  }
 
   return (
     <div className="container">
@@ -32,8 +23,6 @@ const Home = () => {
       <button className="startButton" onClick={handleAboutClick}>
         ABOUT
        </button>
-
-      <AuthModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
     </div>
   );
 };

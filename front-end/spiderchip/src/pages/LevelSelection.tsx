@@ -1,20 +1,22 @@
 import LevelSelectButton from "../components/LevelSelectButton.tsx"
-import PuzzleDetailPopUp from "../components/LevelDetailPopUp.tsx";
-import { compareLevelItems, getUniqueLevelItemKey, LevelItem, LevelItemType, LevelStatus } from "../types.ts"
+import LevelDetailPopUp from "../components/LevelDetailPopUp.tsx";
+import {compareLevelItems, getUniqueLevelItemKey, LevelItem, LevelItemType, LevelStatus} from "../types.ts"
 import GearIcon from "../assets/images/gear-icon.svg"
 import "./LevelSelection.css"
-import { useEffect, useRef, useState } from "react";
-import { CSSTransition } from "react-transition-group";
-import api, { getCurrentUserId, setAuthToken } from "../services/api.ts";
-import { useNavigate } from "react-router-dom";
-import { getAllPuzzles } from "../components/PuzzleDefinitions.ts";
-import { useHorizontalScroll } from "../utils/useHorizontalScroll.tsx";
-import { getAllStoryBeats } from "../components/StoryDefinitions.ts";
+import {useEffect, useRef, useState} from "react";
+import {CSSTransition} from "react-transition-group";
+// import api, {getCurrentUserId, setAuthToken} from "../services/api.ts";
+import {getAllPuzzles} from "../components/PuzzleDefinitions.ts";
+import {useHorizontalScroll} from "../utils/useHorizontalScroll.tsx";
+import {getAllStoryBeats} from "../components/StoryDefinitions.ts";
+import {useNavigate} from "react-router-dom";
 
-type LevelStatusDict = {
-    levelId: number,
-    status: LevelStatus
-}
+// type LevelStatusDict = {
+//     levelId: number,
+//     status: LevelStatus
+// }
+
+const LEVEL_LIST_KEY = "user_level_progress";
 
 export default function LevelSelection() {
     const [levelList, setLevelList] = useState<LevelItem[]>([]);
@@ -25,49 +27,71 @@ export default function LevelSelection() {
     const scrollRef = useHorizontalScroll<HTMLDivElement>();
     const popupRef = useRef<HTMLDivElement>(null);
 
-    useEffect(() => {
-        const userId = getCurrentUserId();
+    function loadLevels(): LevelItem[] {
         const originalLevels: LevelItem[] = getAllPuzzles().map((p) => {
-            return { type: LevelItemType.PUZZLE, id: p.puzzle_number, title: p.title, description: p.description, status: LevelStatus.LOCKED }
+            return {
+                type: LevelItemType.PUZZLE,
+                id: p.puzzle_number,
+                title: p.title,
+                description: p.description,
+                status: LevelStatus.LOCKED
+            }
         });
         const originalStories: LevelItem[] = getAllStoryBeats().map((s) => {
-            return { type: LevelItemType.STORY, id: s.story_number, level: s.associated_puzzle, storyType: s.type, description: s.description, status: LevelStatus.AVAILABLE }
+            return {
+                type: LevelItemType.STORY,
+                id: s.story_number,
+                level: s.associated_puzzle,
+                storyType: s.type,
+                description: s.description,
+                status: LevelStatus.AVAILABLE
+            }
         });
-        api.get(`/levels/all/${userId}`)
-            .then((response: { data: LevelStatusDict[] }) => {
-                // the data tells us each level's status
-                // could be entirely empty for a new account
-                response.data.forEach((stat: LevelStatusDict) => {
-                    const trueLevel = originalLevels.find((tl) => tl.id === stat.levelId);
-                    if (trueLevel) {
-                        trueLevel.status = stat.status;
-                    }
-                });
-            })
-            .catch(() => {
-                console.log("Failed to pull save data.");
-            })
-            .finally(() => {
-                // always want to show the levels
-                const originalAllItems = [...originalLevels, ...originalStories].sort(compareLevelItems);
-                const lastPassedLevel = originalLevels
-                    .filter((l) => l.status === LevelStatus.COMPLETED || l.status === LevelStatus.SKIPPED)
-                    .map((l) => l.id)
-                    .reduce((i, j) => { return i > j ? i : j }, 0);
-                originalAllItems.forEach((l) => {
-                    // story elements after incomplete puzzles get locked
-                    if (l.type === LevelItemType.STORY) {
-                        const associatedLevel = originalLevels.find((puzzle) => puzzle.id === l.level);
-                        if (associatedLevel && !(associatedLevel.status === LevelStatus.SKIPPED || associatedLevel.status === LevelStatus.COMPLETED)) {
-                            l.status = LevelStatus.LOCKED;
-                        }
-                    }
-                    else if (l.type === LevelItemType.PUZZLE && l.id === lastPassedLevel + 1) {
-                        l.status = LevelStatus.AVAILABLE;
-                    }
-                })
-                setLevelList(originalAllItems);
-            })
+
+        let originalAllItems = [...originalLevels, ...originalStories].sort(compareLevelItems);
+
+        const saved = localStorage.getItem(LEVEL_LIST_KEY);
+        if (!saved) {
+            localStorage.setItem(LEVEL_LIST_KEY, JSON.stringify(originalAllItems));
+            return originalAllItems;
+        }
+
+        const savedList = JSON.parse(saved) as LevelItem[];
+        const savedMap = new Map<string, LevelStatus>(savedList.map(l => [getUniqueLevelItemKey(l), l.status]))
+
+        originalAllItems = originalAllItems.map(item => ({
+            ...item,
+            status: savedMap.get(getUniqueLevelItemKey(item)) ?? item.status
+        }))
+
+        const lastPassedLevel = originalAllItems
+            .filter((l) => l.type === LevelItemType.PUZZLE && (l.status === LevelStatus.COMPLETED || l.status === LevelStatus.SKIPPED))
+            .map((l) => l.id)
+            .reduce((i, j) => { return i > j ? i : j }, 0);
+
+        originalAllItems = originalAllItems.map(l => {
+            if (l.type === LevelItemType.STORY) {
+                const parent = originalAllItems.find(p => p.type === LevelItemType.PUZZLE && p.id === l.level);
+                if (parent && (parent.status === LevelStatus.COMPLETED || parent.status === LevelStatus.SKIPPED)) {
+                    return { ...l, status: LevelStatus.AVAILABLE };
+                } else {
+                    return { ...l, status: LevelStatus.LOCKED };
+                }
+            } else if (l.type === LevelItemType.PUZZLE && l.id === lastPassedLevel + 1) {
+                return { ...l, status: LevelStatus.AVAILABLE };
+            }
+            return l;
+        });
+
+        localStorage.setItem(LEVEL_LIST_KEY, JSON.stringify(originalAllItems));
+        return originalAllItems;
+    }
+
+    useEffect(() => {
+        // if (!localStorage.getItem(LEVEL_LIST_KEY)) {
+        //     localStorage.setItem(LEVEL_LIST_KEY, JSON.stringify(loadLevels()));
+        // }
+        setLevelList(loadLevels());
     }, []);
 
     const toggleDropdown = () => {
@@ -83,15 +107,15 @@ export default function LevelSelection() {
         setLevelList((prevLevels) => {
             const updatedLevels = prevLevels.map((l) => {
                 if (l === level) {
-                    const modifiedLevel = { ...l, status: newStatus };
+                    const modifiedLevel = {...l, status: newStatus};
                     setLocalSelectedLevel(modifiedLevel);
                     return modifiedLevel;
                 } else if (newStatus !== LevelStatus.LOCKED) {
                     // unlock the stuff after it
                     if (l.type === LevelItemType.STORY && l.level == level.id) {
-                        return { ...l, status: LevelStatus.AVAILABLE };
+                        return {...l, status: LevelStatus.AVAILABLE};
                     } else if (l.type === LevelItemType.PUZZLE && l.status === LevelStatus.LOCKED && l.id === level.id + 1) {
-                        return { ...l, status: LevelStatus.AVAILABLE };
+                        return {...l, status: LevelStatus.AVAILABLE};
                     } else {
                         return l;
                     }
@@ -99,17 +123,8 @@ export default function LevelSelection() {
                     return l;
                 }
             });
-            const userId = getCurrentUserId();
-            api.post(`/levels/all/${userId}`,
-                /* Alternatively, to update all unlocked levels, pass the following:
-                    updatedLevels
-                        .filter((l) => l.type === LevelItemType.PUZZLE && l.status !== LevelStatus.LOCKED)
-                        .map((l) => { return { levelId: l.id, status: l.status } })
-                */
-                [{ levelId: level.id, status: newStatus }]
-            ).catch(() => {
-                console.log("Failed to save level status changes.");
-            });
+
+            localStorage.setItem(LEVEL_LIST_KEY, JSON.stringify(updatedLevels));
             return updatedLevels;
         });
     };
@@ -123,7 +138,6 @@ export default function LevelSelection() {
     }
 
     const handleLogOut = () => {
-        setAuthToken(null);
         navigate("/");
     }
 
@@ -152,13 +166,19 @@ export default function LevelSelection() {
         <div className="level-selection-container">
             <div className="settings-dropdown">
                 <button onClick={toggleDropdown}>
-                    <img src={GearIcon} />
+                    <img src={GearIcon}/>
                 </button>
                 {dropdownVisible && (
                     <ul className="dropdown-menu">
-                        <li><button onClick={handleHome}>Home</button></li>
-                        <li><button onClick={handleSandbox}>Sandbox</button></li>
-                        <li><button onClick={handleLogOut}>Log Out</button></li>
+                        <li>
+                            <button onClick={handleHome}>Home</button>
+                        </li>
+                        <li>
+                            <button onClick={handleSandbox}>Sandbox</button>
+                        </li>
+                        <li>
+                            <button onClick={handleLogOut}>Log Out</button>
+                        </li>
                     </ul>
                 )}
             </div>
@@ -188,7 +208,7 @@ export default function LevelSelection() {
             >
                 <div ref={popupRef} className={"popup-slide-wrapper"}>
                     {popupContentLevel && (
-                        <PuzzleDetailPopUp
+                        <LevelDetailPopUp
                             level={popupContentLevel}
                             updateLevelStatus={updateLevelStatus}
                         />

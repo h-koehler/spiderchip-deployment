@@ -1,4 +1,4 @@
-import { LevelStatus, LineHighlight, LineHighlightType } from "../types.ts";
+import {LevelItem, LevelItemType, LevelStatus, LineHighlight, LineHighlightType} from "../types.ts";
 import PuzzleVisualization from "../components/PuzzleVisualization.tsx";
 import PuzzleInput from "../components/PuzzleInput.tsx";
 import PuzzleOutput from "../components/PuzzleOutput.tsx";
@@ -21,12 +21,31 @@ import * as LT from "../language-system/ls-interface-types.ts";
 import { useNavigate, useParams } from "react-router-dom";
 import { getPuzzleDefinition } from "../components/PuzzleDefinitions.ts";
 import DebugPuzzleVisualization from "../components/DebugPuzzleVisualization.tsx";
-import api, { getCurrentUserId } from "../services/api.ts";
+// import api, { getCurrentUserId } from "../services/api.ts";
 
 type LevelInfo = {
     id: string | number;
     title: string;
     description: string;
+}
+
+const LEVEL_LIST_KEY = "user_level_progress";
+const PUZZLE_KEY = (id: string | undefined) => `user_puzzle_${id}`;
+
+function markLevelComplete(puzzleId: number) {
+    const raw = localStorage.getItem(LEVEL_LIST_KEY);
+    if (!raw) return;
+    const levels: LevelItem[] = JSON.parse(raw);
+
+    const updated = levels.map(l => {
+        if (l.type === LevelItemType.PUZZLE && l.id === puzzleId) {
+            return { ...l, status: LevelStatus.COMPLETED};
+        }
+        return l;
+    });
+
+    console.log("🚀 [PuzzleUI] writing updated levels:", updated);
+    localStorage.setItem(LEVEL_LIST_KEY, JSON.stringify(updated))
 }
 
 const emptyLevel: LevelInfo = { id: "unknown", title: "Unknown", description: "Something went wrong when loading the puzzle." };
@@ -37,7 +56,7 @@ export default function PuzzleUI() {
     const { puzzleId } = useParams();
     const navigate = useNavigate();
 
-    const userId = useRef<string | undefined>(getCurrentUserId());
+    // const userId = useRef<string | undefined>(getCurrentUserId());
     const puzzleStatus = useRef<LevelStatus>(LevelStatus.AVAILABLE);
     const [showSuccess, setShowSuccess] = useState(false);
 
@@ -64,6 +83,7 @@ export default function PuzzleUI() {
     const [code, setCode] = useState<string>("");
     const savedCode = useRef<string>("");
     const [initialVars, setInitialVars] = useState<LT.CustomSlot[]>([]);
+
 
     useEffect(() => {
         const handleKeypress = (event: KeyboardEvent) => {
@@ -120,20 +140,20 @@ export default function PuzzleUI() {
                 caseNum.current = chosenCase;
                 runtime.current = createRuntime(puzzle);
 
-                api.get(`/levels/${puzzleId}/${userId.current}`)
-                    .then((response) => {
-                        runtime.current.init(response.data.code, vars, chosenCase);
-                        setCode(response.data.code);
-                        savedCode.current = response.data.code;
-                        puzzleStatus.current = response.data.status;
-                    }).catch(() => {
-                        // this may well be benign if 404 - e.g., a user's first attempt
-                        runtime.current.init("", vars, chosenCase);
-                        console.log("Failed to pull save data");
-                    }).finally(() => {
-                        setRtState(runtime.current.state());
-                        setLoading(false);
-                    })
+                const saved = localStorage.getItem(PUZZLE_KEY(puzzleId))
+                if (saved) {
+                    const { code: savedCodeString, status: savedStatus } = JSON.parse(saved);
+                    runtime.current.init(savedCodeString, vars, chosenCase);
+                    setCode(savedCodeString);
+                    savedCode.current = savedCodeString; // savedCodeRef.current = savedCode
+                    puzzleStatus.current = savedStatus;
+                } else {
+                    runtime.current.init("", vars, chosenCase);
+                }
+
+                setRtState(runtime.current.state());
+                setLoading(false);
+
             } else {
                 console.log("Could not find puzzle.");
                 setLoading(false);
@@ -146,26 +166,15 @@ export default function PuzzleUI() {
         if (puzzleId !== "sandbox") {
             // if we know we haven't saved this, then save it
             if (code !== savedCode.current) {
-                api.post(`/levels/${puzzleId}/${userId.current}`, {
-                    status: puzzleStatus.current,
-                    code: code
-                })
-                    .then(() => {
-                        savedCode.current = code;
-                        // want to show success only after we've synced the save
-                        if (puzzleStatus.current === LevelStatus.COMPLETED) {
-                            setShowSuccess(true);
-                        }
-                    })
-                    .catch(() => {
-                        console.log("Failed to save level data.");
-                    })
+                const payload = { code, status: puzzleStatus.current };
+                localStorage.setItem(PUZZLE_KEY(puzzleId), JSON.stringify(payload));
             }
             // they re-beat the level with the same code
-            else if (puzzleStatus.current === LevelStatus.COMPLETED) {
+            if (puzzleStatus.current === LevelStatus.COMPLETED) {
                 setShowSuccess(true);
             }
         }
+        savedCode.current = code;
     }, [puzzleId, code]);
 
     useEffect(() => {
@@ -291,6 +300,7 @@ export default function PuzzleUI() {
                 highlightType = LineHighlightType.SUCCESS;
                 additionalMessage = "Puzzle completed!";
                 puzzleStatus.current = LevelStatus.COMPLETED;
+                markLevelComplete(Number(puzzleId));
                 saveProgress();
                 break;
             case LT.SpiderStateEnum.DUBIOUS:
