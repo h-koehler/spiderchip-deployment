@@ -54,6 +54,28 @@ export default function LevelSelection() {
 
         const saved = localStorage.getItem(LEVEL_LIST_KEY);
         if (!saved) {
+            // unlock first 3 story beats
+            const firstThreeStoryIds = new Set<number>([1, 2, 3]);
+            originalAllItems = originalAllItems.map(item => {
+                if (item.type === LevelItemType.STORY) {
+                    return {
+                        ...item,
+                        status: firstThreeStoryIds.has(item.id)
+                            ? LevelStatus.AVAILABLE
+                            : LevelStatus.LOCKED
+                    };
+                }
+                return item;
+            });
+
+            // unlock first level
+            originalAllItems = originalAllItems.map(l => {
+                if (l.type===LevelItemType.PUZZLE && Number(l.id)===1) {
+                    return { ...l, status: LevelStatus.AVAILABLE };
+                }
+                return l;
+            });
+
             localStorage.setItem(LEVEL_LIST_KEY, JSON.stringify(originalAllItems));
             return originalAllItems;
         }
